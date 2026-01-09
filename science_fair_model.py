@@ -79,7 +79,6 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     bars = ax.bar(bars, heights, color=colors)
     ax.set_ylabel('BBB Penetration')
-    ax.set_title('Your Dual RMT+AMT beats published research')
     ax.axhline(y=0.75, color='gold', linestyle='--', label='Industry Target')
     
     # Add value labels on bars
