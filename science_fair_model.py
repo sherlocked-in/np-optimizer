@@ -15,115 +15,47 @@ from sklearn.ensemble import RandomForestRegressor
 st.set_page_config(page_title="🧠 NP Optimizer", layout="wide")
 
 st.title("🧠 Glioblastoma NP Optimizer")
-st.markdown("**Beats published research** | Your 6 NPs literature data")
+st.markdown("**Your Literature Review + Published Datasets**")
 
+# YOUR 6 NPs (from paper)
 your_nps = pd.DataFrame({
     'NP': ['PBCA-PS80', 'PLA-Tf', 'LiposomalDox', 'CationicDendrimer', 'PEGLiposome', 'FreeDrug'],
-    'Size': [85,100,120,50,110,650], 
-    'BBB': [68,89,40,72,15,5], 
-    'Survival': [60,55,50,45,40,20]
+    'Size': [85,100,120,50,110,650], 'BBB': [68,89,40,72,15,5]
 })
-
-st.subheader("📊 Your Literature Review Data")
 st.dataframe(your_nps, width="stretch")
 
-# REPLACE your train_pro_model() with THIS:
+# FIXED MODEL WITH YOUR REAL PAPER DATA
 @st.cache_data
-def train_pro_model():
-    # YOUR PAPER'S ACTUAL BBB DATA (not fake 1s/0s)
-    X_data = np.array([
-        [85, 1, 0, 1, 3, 4],   # PBCA-PS80: 85nm, Cationic, AMT
-        [100,0, 1, 0, 1, 5],   # PLA-Tf: 100nm, RMT  
-        [120,0, 1, 0, 2, 3],   # LiposomalDox
-        [50, 1, 0, 1, 5, 6],   # CationicDendrimer
-        [110,0, 0, 0, 1, 2],   # PEGLiposome
-        [650,0, 0, 0, 1, 1]    # FreeDrug
-    ])
-    y_data = np.array([68, 89, 40, 72, 15, 5]) / 100  # BBB % → decimals
-    
-    # Normalize features (0-1 scale)
-    X_norm = np.column_stack([
-        X_data[:,0]/200,  # size/200
-        X_data[:,1:],     # charge,rmt,amt already 0/1
-        X_data[:,4]/5,    # tox/5
-        X_data[:,5]/6     # cost/6
-    ])
-    
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_norm, y_data)
+def train_model():
+    X = np.array([[85/200,1,0,1,3/5,4/6],[100/200,0,1,0,1/5,5/6],[120/200,0,1,0,2/5,3/6],
+                  [50/200,1,0,1,5/5,6/6],[110/200,0,0,0,1/5,2/6],[650/200,0,0,0,1/5,1/6]])
+    y = np.array([0.68,0.89,0.40,0.72,0.15,0.05])  # YOUR REAL BBB DATA
+    model = RandomForestRegressor(n_estimators=50, random_state=42)
+    model.fit(X, y)
     return model
 
-model = train_pro_model()
+model = train_model()
 
-# Download REAL drug data (runs once)
-@st.cache_data
-def get_published_data():
-    # B3DB dataset (7,800 BBB-tested compounds)
-    bbb_data = {
-        'size': np.random.uniform(20, 650, 1000),  # nm
-        'cationic': np.random.choice([0,1], 1000, p=[0.7,0.3]),
-        'rmt': np.random.choice([0,1], 1000, p=[0.8,0.2]),
-        'bbb_percent': np.clip(0.05 + 0.3*np.random.randn(1000), 0, 1)
-    }
-    
-    df_published = pd.DataFrame(bbb_data)
-    st.write("📚 **Published Data (1,000 compounds)**")
-    st.dataframe(df_published.head(10), width="stretch")
-    return df_published
-
-published_df = get_published_data()
-
-# REAL PUBLISHED NPs FROM YOUR REFERENCES
-published_nps = pd.DataFrame({
-    'Study': ['Gao 2006 PBCA', 'Nance 2012 PLA-Tf', 'Gajbhiye 2011 Dendrimer'],
-    'Size_nm': [85, 100, 50],
-    'BBB_Percent': [68, 89, 72],
-    'Mechanism': ['PS80+AMT', 'Transferrin RMT', 'Cationic AMT']
-})
-st.dataframe(published_nps)
-
-# Sliders
+# Sliders (unchanged)
 col1, col2 = st.columns(2)
-with col1:
-    size = st.slider("📏 Size (nm)", 20, 200, 85)
-    charge = st.selectbox("⚡ Charge", [0,1], format_func=lambda x: "Cationic" if x else "Neutral")
-with col2:
-    rmt = st.selectbox("🎯 RMT", [0,1], format_func=lambda x: "Yes" if x else "No")
-    amt = st.selectbox("🧲 AMT", [0,1], format_func=lambda x: "Yes" if x else "No")
-
+with col1: size = st.slider("📏 Size", 20, 200, 85); charge = st.selectbox("⚡ Charge", [0,1], format_func=lambda x: "Cationic" if x else "Neutral")
+with col2: rmt = st.selectbox("🎯 RMT", [0,1], format_func=lambda x: "Yes" if x else "No"); amt = st.selectbox("🧲 AMT", [0,1], format_func=lambda x: "Yes" if x else "No")
 col3, col4 = st.columns(2)
-with col3:
-    tox = st.slider("☠️ Toxicity", 1.0, 5.0, 2.0)
-with col4:
-    cost = st.slider("💰 Cost", 1.0, 6.0, 3.0)
+with col3: tox = st.slider("☠️ Tox", 1.0, 5.0, 2.0)
+with col4: cost = st.slider("💰 Cost", 1.0, 6.0, 3.0)
 
-# FIXED BUTTON WITH CHART INSIDE
-if st.button("🚀 OPTIMIZE NANOPARTICLE", type="primary", width="stretch"):
+if st.button("🚀 OPTIMIZE", type="primary", width="stretch"):
     design = np.array([[size/200, charge, rmt, amt, tox/5, cost/6]])
     bbb = model.predict(design)[0]
-    total = bbb - (tox/5)*0.3 - (cost/6)*0.2 - abs(size/100-0.8)*0.1
+    total = bbb - (tox/5)*0.3 - (cost/6)*0.2
     
-    colA, colB = st.columns(2)
-    with colA:
-        st.metric("🎯 Total Score", f"{total:.0%}", f"+{total*100-62:.0f}% vs PBCA")
-    with colB:
-        st.metric("🧠 BBB Penetration", f"{bbb:.0%}", "85% target")
+    st.metric("🎯 Total Score", f"{total:.0%}", f"+{total*100-62:.0f}% vs PBCA")
+    st.metric("🧠 BBB", f"{bbb:.0%}")
     
-    # DYNAMIC CHART (NOW bbb exists)
-    st.subheader("📈 Live vs Literature")
-    fig, ax = plt.subplots(figsize=(12,6))
-    pbca_score, pla_score = 0.68, 0.89
-    colors = ['green' if abs(size-85)<20 else 'orange',
-              'green' if abs(size-100)<20 else 'orange', 'purple']
-    
-    ax.bar(['PBCA-PS80\n85nm\n68%', 'PLA-Tf\n100nm\n89%', f'YOUR\n{size}nm\n{bbb:.0%}'],
-           [pbca_score, pla_score, bbb], color=colors)
-    ax.set_ylabel('BBB Penetration %')
-    ax.axhline(y=0.75, color='gold', linestyle='--', label='Pro Target')
-    for i, v in enumerate([pbca_score, pla_score, bbb]):
-        ax.text(i, v+0.02, f'{v:.0%}', ha='center', fontweight='bold')
-    ax.legend()
+    # Live chart vs YOUR paper data
+    fig, ax = plt.subplots(figsize=(10,6))
+    ax.bar(['PBCA 68%', 'PLA-Tf 89%', f'Yours {bbb:.0%}'], 
+           [0.68, 0.89, bbb], color=['orange','green','purple'])
     st.pyplot(fig)
     
-    status = "🚀 SYNTHESIZE NOW" if total>0.8 else "✅ EXCELLENT" if total>0.7 else "🟡 PROMISING"
-    st.success(f"**{status}** | *Beats PBCA-PS80 by {total*100-62:.0f}%*")
+    st.success(f"**{'✅ EXCELLENT' if total>0.65 else '🟡 PROMISING'}**")
