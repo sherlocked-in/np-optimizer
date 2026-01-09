@@ -144,7 +144,19 @@ st.info("""
 • SS31-DOX: Extended survival [Int J Oncol 2025]
 
 **Cationic Toxicity Confirmed:**
-• Lockman 2004: BBB disruption [J Pharmacol Exp Ther]
-• Knudsen 2013: Neuron loss [Nanomedicine]
+**1. Fu PP, et al. (2014)**  
+Mechanisms of nanotoxicity: Generation of reactive oxygen species  
+<em>J Food Drug Anal 22(1):64-75</em>  
+🔗 [doi:10.1016/j.jfda.2014.01.005](https://doi.org/10.1016/j.jfda.2014.01.005)
+
+**2. Lockman et al. (2004)**  
+Cationic nanoparticles damage BBB integrity  
+<em>J Pharmacol Exp Ther</em>
+
+**3. Knudsen et al. (2013)**  
+Cationic NPs → greater neuron loss vs anionic  
+<em>Nanomedicine</em>
+"""
+st.markdown(refs)
 
 """)
