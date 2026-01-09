@@ -71,48 +71,30 @@ if st.button("🚀 OPTIMIZE NANOPARTICLE", type="primary", use_container_width=T
     bbb = model.predict(design)[0]
     total = bbb - (tox/5)*0.3 - (cost/6)*0.2 - abs(size/100-0.8)*0.1
     
-    # Metrics
-    colA, colB = st.columns(2)
-    with colA:
-        st.metric("🎯 Total Score", f"{total:.0%}", f"+{total*100-62:.0f}% vs paper PBCA")
-    with colB:
-        st.metric("🧠 BBB Penetration", f"{bbb:.0%}", "85%+ pro target")
+    # [your existing metrics code here]
     
-    # DYNAMIC CHART HERE (code above)
+    # ✅ FIXED DYNAMIC CHART - NOW bbb exists
+    st.subheader("📈 Live Compatibility vs Literature")
+    fig, ax = plt.subplots(figsize=(12,6))
+    pbca_score = 0.68  # PBCA-PS80 85nm AMT[file:30]
+    pla_score = 0.89   # PLA-Tf 100nm RMT[file:30]
     
-    status = "🚀 SYNTHESIZE NOW" if total>0.8 else "✅ EXCELLENT" if total>0.7 else "🟡 PROMISING"
-    st.success(f"**{status}** 💰 *Saves pharma $15M vs paper*")
-
-
-# DYNAMIC CHART - Updates with slider values
-st.subheader("📈 Live Compatibility vs Literature")
-fig, ax = plt.subplots(figsize=(12,6))
-
-# Your article's benchmarks [file:30]
-pbca_score = 0.68  # PBCA-PS80: 85nm+PS80/AMT [file:30]
-pla_score = 0.89   # PLA-Tf: 100nm+RMT [file:30]
-
-# Dynamic AI prediction (your current design)
-ai_score = bbb  # From model.predict()
-
-# Bar colors: Green=excellent match, Red=poor
-colors = ['orange' if abs(size-85)<20 else 'red', 
-          'green' if abs(size-100)<20 else 'red', 
-          'purple']
-
-ax.bar(['PBCA-PS80\n85nm AMT\n68%', 
-        'PLA-Tf\n100nm RMT\n89%', 
-        f'YOUR DESIGN\n{size}nm\n{ai_score:.0%}'],
-       [pbca_score, pla_score, ai_score], color=colors)
-
-ax.set_ylabel('BBB Penetration %')
-ax.set_title('Live: How Your Design Compares to Published Research')
-ax.axhline(y=0.75, color='gold', linestyle='--', label='Pro Target 75%')
-
-# Add value labels
-for i, v in enumerate([pbca_score, pla_score, ai_score]):
-    ax.text(i, v + 0.02, f'{v:.0%}', ha='center', fontweight='bold')
-
-ax.legend()
-st.pyplot(fig)
-
+    colors = ['green' if abs(size-85)<20 else 'orange',
+              'green' if abs(size-100)<20 else 'orange',
+              'purple']
+    
+    ax.bar(['PBCA-PS80\n85nm AMT\n68%', 
+            'PLA-Tf\n100nm RMT\n89%', 
+            f'YOUR DESIGN\n{size}nm\n{bbb:.0%}'],
+           [pbca_score, pla_score, bbb], color=colors)
+    
+    ax.set_ylabel('BBB Penetration %')
+    ax.set_title('Live: Your Design vs Published Research')
+    ax.axhline(y=0.75, color='gold', linestyle='--', label='Pro Target 75%')
+    
+    for i, v in enumerate([pbca_score, pla_score, bbb]):
+        ax.text(i, v + 0.02, f'{v:.0%}', ha='center', fontweight='bold')
+    ax.legend()
+    st.pyplot(fig)
+    
+    # [your status/success code]
