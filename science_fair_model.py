@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="🧠 NP Optimizer", layout="wide")
 
 st.title("🧠 Glioblastoma NP Optimizer")
-st.markdown("**Beats PBCA-PS80 (68%)** | Trained on your 6 literature NPs")
+st.markdown("**Trained to reduce pharmaceutical expenses** | Prototype ")
 
 # YOUR LITERATURE TABLE
 your_nps = pd.DataFrame({
@@ -100,13 +100,4 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     else:
         st.warning("🟡 **PROMISING** | Adjust parameters")
 
-# JUDGE DEMO PRESET
-st.markdown("---")
-st.markdown("### 🎯 **JUDGE DEMO: 85nm Cationic+RMT+AMT**")
-st.info("""
-✅ Size: 85nm (PBCA optimal)
-✅ Charge: Cationic (100x AMT boost)  
-✅ RMT: Yes (PLA-Tf 89%)
-✅ AMT: Yes (72% Dendrimer)
-→ **PREDICTS 78%** (+10% vs paper PBCA 68%)
-""")
+
