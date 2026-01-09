@@ -22,7 +22,7 @@ your_nps = pd.DataFrame({
     'Size': [85,100,120,50,110,650], 
     'BBB': [68,89,40,72,15,5]
 })
-st.subheader("📊 Your Published Data")
+st.subheader("📊Published Data")
 st.dataframe(your_nps, width="stretch")
 
 # PHYSICS FORMULA FROM YOUR PAPER (NO ML BREAKAGE)
