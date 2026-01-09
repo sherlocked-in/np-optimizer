@@ -27,26 +27,19 @@ your_nps = pd.DataFrame({
 # Transfer Learning Model #3 + #1 balancing
 @st.cache_data
 def train_pro_model():
-    # Your 6 NPs (fine-tune target)
-    your_X = np.array([[85/200,1,0,1,3/5,4/6], [100/200,0,1,0,1/5,5/6], [120/200,0,1,0,2/5,3/6], 
-                       [50/200,1,0,1,5/5,6/6], [110/200,0,0,0,1/5,2/6], [650/200,0,0,0,1/5,1/6]])
-    your_y = np.array([68,89,40,72,15,5]) / 100  # BBB as fraction
+    # YOUR EXACT LITERATURE DATA [your paper]
+    your_X = np.array([
+        [85/200, 1, 0, 1, 3/5, 4/6],   # PBCA-PS80: 68% BBB
+        [100/200, 0, 1, 0, 1/5, 5/6],  # PLA-Tf: 89% BBB  
+        [120/200, 0, 1, 0, 2/5, 3/6],  # LiposomalDox: 40%
+        [50/200, 1, 0, 1, 5/5, 6/6],   # CationicDendrimer: 72%
+        [110/200, 0, 0, 0, 1/5, 2/6],  # PEGLiposome: 15%
+        [650/200, 0, 0, 0, 1/5, 1/6]   # FreeDrug: 5%
+    ])
+    your_y = np.array([0.68, 0.89, 0.40, 0.72, 0.15, 0.05])  # ACTUAL BBB % from table
     
-    # Simulate B3DB pre-training (pro dataset: 1000s compounds, simplified features/size proxy)
-    # Real: Load from HuggingFace maomlab/B3DB, use size/charge-like feats for BBB
-    np.random.seed(42)
-    b3db_size = np.random.uniform(20, 650, 2000) / 200
-    b3db_charge = np.random.randint(0, 2, 2000)
-    b3db_rmt = np.random.randint(0, 2, 2000)
-    b3db_amt = np.random.randint(0, 2, 2000)
-    b3db_tox = np.random.uniform(1, 5, 2000) / 5
-    b3db_cost = np.random.uniform(1, 6, 2000) / 6
-    b3db_X = np.column_stack([b3db_size, b3db_charge, b3db_rmt, b3db_amt, b3db_tox, b3db_cost])
-    b3db_y = np.clip(0.1 + 0.3 * b3db_charge + 0.2 * b3db_rmt + 0.25 * b3db_amt - 0.1 * b3db_size**2 - 0.05 * b3db_tox - 0.03 * b3db_cost + np.random.normal(0, 0.1, 2000), 0, 1)
-    
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(b3db_X, b3db_y)  # Pre-train on B3DB-like pro data
-    model.fit(your_X, your_y)   # Fine-tune on your 6 NPs (transfer learning)
+    model = RandomForestRegressor(n_estimators=50, random_state=42, max_depth=3)
+    model.fit(your_X, your_y)
     return model
 
 model = train_pro_model()
