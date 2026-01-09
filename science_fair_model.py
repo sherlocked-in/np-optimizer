@@ -67,8 +67,8 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     total = bbb - (tox/5)*0.25 - (cost/6)*0.15
     
     col1, col2 = st.columns(2)
-    col1.metric("🎯 Total Score", f"{total:.0%}", f"+{total*100-62:.0f}% vs PBCA")
-    col2.metric("🧠 BBB Penetration", f"{bbb:.0%}", "85% target")
+    col1.metric("🎯 Total Score", f"{total:.0%}")
+    col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
     
     # DYNAMIC CHART VS YOUR PAPER
     st.subheader("📈 Live vs Published Research")
