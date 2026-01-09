@@ -112,7 +112,7 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     # STATUS
     if total > 0.75:
-         st.markdown("""
+        st.markdown("""
     <div style='text-align:center; padding:40px; background:#1a1a1a; 
                 border-radius:25px; color:gold; position:relative; overflow:hidden;'>
         <div style='font-size:100px; animation: trophy-reveal 3s ease-out forwards;'>🏆</div>
