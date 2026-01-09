@@ -112,7 +112,7 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     # STATUS
     if total > 0.75:
-    st.markdown("""
+        st.markdown("""
     <div id="confetti"></div>
     <style>
     #confetti {
