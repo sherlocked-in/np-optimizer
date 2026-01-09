@@ -64,7 +64,7 @@ with col4:
 if charge:
     st.warning("""
     ⚠️ **CATIONIC ALERT** 
-    • 100x better BBB crossing [your paper]
+    • 100x better BBB crossing
     • BUT 12% neurotoxicity penalty added
     • Lockman 2004: BBB damage in rats
     • Knudsen 2013: Neuron death vs anionic NPs
