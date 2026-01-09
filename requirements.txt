@@ -5,13 +5,4 @@ scikit-learn
 pandas
 numpy
 matplotlib
-# Add to requirements.txt: datasets
-from datasets import load_dataset
 
-@st.cache_data  
-def load_b3db():
-    ds = load_dataset("maomlab/B3DB", split="train[:1000]")  # First 1000 compounds
-    return pd.DataFrame(ds)
-
-b3db_df = load_b3db()
-st.dataframe(b3db_df.head())
