@@ -29,9 +29,9 @@ st.markdown("""
 
 # YOUR LITERATURE TABLE
 your_nps = pd.DataFrame({
-    'NP': ['PBCA-PS80', 'PLA-Tf', 'LiposomalDox', 'CationicDendrimer', 'PEGLiposome', 'FreeDrug'],
-    'Size': [85,100,120,50,110,650], 
-    'BBB': [68,89,40,72,15,5]
+    'NP type': ['PBCA-PS80', 'PLA-Tf', 'LiposomalDox', 'CationicDendrimer', 'PEGLiposome', 'FreeDrug'],
+    'Size (nm)': [85,100,120,50,110,650], 
+    'BBB crossing efficiency': [68,89,40,72,15,5]
 })
 st.subheader("📊Published Data")
 st.dataframe(your_nps, width="stretch")
@@ -69,7 +69,7 @@ col3, col4 = st.columns(2)
 with col3:
     tox = st.slider("☠️ Toxicity", 1.0, 5.0, 1.5)
 with col4:
-    cost = st.slider("💰 Cost", 1.0, 6.0, 2.0)
+    cost = st.slider("💰 Cost/Complexity", 1.0, 6.0, 2.0)
 
 # ⚠️ TOXICITY WARNINGS
 if charge:
@@ -112,7 +112,36 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     # STATUS
     if total > 0.75:
-        st.balloons()
+    st.markdown("""
+    <div id="confetti"></div>
+    <style>
+    #confetti {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        pointer-events: none; z-index: 9999;
+    }
+    .confetti-piece {
+        position: absolute; width: 10px; height: 10px; 
+        background: #f00; animation: confetti-fall 3s linear infinite;
+    }
+    @keyframes confetti-fall {
+        0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    </style>
+    <script>
+    function makeConfetti() {
+        for(let i=0; i<100; i++) {
+            let confetti = document.createElement('div');
+            confetti.className = 'confetti-piece';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.background = `hsl(${Math.random()*360}, 70%, 60%)`;
+            confetti.style.animationDelay = Math.random() * 3 + 's';
+            document.getElementById('confetti').appendChild(confetti);
+        }
+    }
+    makeConfetti();
+    </script>
+    """, unsafe_allow_html=True)
         st.success("🚀 **SYNTHESIZE NOW** | Beats all published NPs!")
     elif total > 0.65:
         st.success("✅ **EXCELLENT** | +5% vs PBCA-PS80")
