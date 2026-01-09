@@ -24,20 +24,6 @@ your_nps = pd.DataFrame({
     'BBB': [68,89,40,72,15,5], 
     'Survival': [60,55,50,45,40,20]
 })
-
-st.subheader("📊 Your Literature Review Data")
-st.dataframe(your_nps, use_container_width=True)
-
-st.markdown("### 🔬 **RESEARCH-BASED OPTIMIZATION**")
-st.info("""
-**Paper Facts Applied:**
-• PBCA-PS80 (85nm+AMT): 68% BBB, 60-day survival
-• PLA-Tf (100nm+RMT): 89% BBB, 55-day survival
-
-**AI Logic:** Combine PBCA size + PLA RMT + Cationic AMT
-**Test:** 85nm | Cationic | RMT Yes | AMT Yes
-""")
-
 # Transfer Learning Model #3 + #1 balancing
 @st.cache_data
 def train_pro_model():
