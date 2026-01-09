@@ -116,7 +116,7 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     <div style='text-align:center; padding:40px; background:#1a1a1a; 
                 border-radius:25px; color:gold; position:relative; overflow:hidden;'>
         <div style='font-size:100px; animation: trophy-reveal 3s ease-out forwards;'>🏆</div>
-        <h2 style='animation: slide-up 1s ease-out 1s forwards; opacity:0;'>ISEF GOLD</h2>
+        <h2 style='animation: slide-up 1s ease-out 1s forwards; opacity:0;'>EFFICIENT</h2>
     </div>
     <style>
     @keyframes trophy-reveal {
