@@ -112,7 +112,23 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     # STATUS
     if total > 0.75:
-        st.snow()
+           st.markdown("""
+    <div style='text-align:center; padding:40px; background:#1a1a1a; 
+                border-radius:25px; color:gold; position:relative; overflow:hidden;'>
+        <div style='font-size:100px; animation: trophy-reveal 3s ease-out forwards;'>🏆</div>
+        <h2 style='animation: slide-up 1s ease-out 1s forwards; opacity:0;'>ISEF GOLD</h2>
+    </div>
+    <style>
+    @keyframes trophy-reveal {
+        0% { transform: scale(0) rotate(-180deg); opacity:0; }
+        50% { transform: scale(1.2) rotate(0deg); opacity:1; }
+        100% { transform: scale(1) rotate(10deg); }
+    }
+    @keyframes slide-up {
+        to { opacity:1; transform: translateY(0); }
+    }
+    </style>
+    """, unsafe_allow_html=True)
         st.success("🚀 **SYNTHESIZE NOW** | Beats all published NPs!")
     elif total > 0.65:
         st.success("✅ **EXCELLENT** | +5% vs PBCA-PS80")
