@@ -22,7 +22,7 @@ st.markdown("""
 <h2 style='margin-top: 0;'>🚨 $2 BILLION PROBLEM: 98% Clinical Failures</h2>
 <p><strong>Pharmaceutical companies lose $1-2 billion per glioblastoma drug</strong> because the blood-brain barrier blocks 98% of candidates in Phase II/III trials. My <strong>AI NP Optimizer</strong> cuts development time by 18 months and saves <strong>$15M per drug</strong> using <em>multi-objective optimization</em> - balancing BBB penetration, toxicity, and cost in real-time.</p>
 
-<p style='font-size: 16px; font-weight: bold; margin-top: 15px;'>🧠 <em>Futuristic dual RMT+AMT transcytosis</em> beats published PBCA-PS80 (68%) with 72% BBB penetration. <strong>First high school discovery.</strong></p>
+<p style='font-size: 16px; font-weight: bold; margin-top: 15px;'>🧠 <em> The building block toward reducing expenses and increasing efficiency. <em> </p>
 </div>
 """, unsafe_allow_html=True)
 
