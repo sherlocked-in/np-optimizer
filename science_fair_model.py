@@ -147,7 +147,7 @@ st.info("""
 
 **1. Fu PP, et al. (2014)**  
 Mechanisms of nanotoxicity: Generation of reactive oxygen species  
-<em>J Food Drug Anal 22(1):64-75</em>  
+<em>J Food Drug Analysis 22(1):64-75</em>  
 🔗 [doi:10.1016/j.jfda.2014.01.005](https://doi.org/10.1016/j.jfda.2014.01.005)
 
 **2. Lockman et al. (2004)**  
