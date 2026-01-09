@@ -156,6 +156,5 @@ Cationic nanoparticles damage BBB integrity
 **3. Knudsen et al. (2013)**  
 Cationic NPs → greater neuron loss vs anionic  
 <em>Nanomedicine</em>
-""")
 st.markdown(refs)
-
+""")
