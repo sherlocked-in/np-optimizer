@@ -112,36 +112,7 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     # STATUS
     if total > 0.75:
-        st.markdown("""
-    <div id="confetti"></div>
-    <style>
-    #confetti {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        pointer-events: none; z-index: 9999;
-    }
-    .confetti-piece {
-        position: absolute; width: 10px; height: 10px; 
-        background: #f00; animation: confetti-fall 3s linear infinite;
-    }
-    @keyframes confetti-fall {
-        0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
-        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-    }
-    </style>
-    <script>
-    function makeConfetti() {
-        for(let i=0; i<100; i++) {
-            let confetti = document.createElement('div');
-            confetti.className = 'confetti-piece';
-            confetti.style.left = Math.random() * 100 + 'vw';
-            confetti.style.background = `hsl(${Math.random()*360}, 70%, 60%)`;
-            confetti.style.animationDelay = Math.random() * 3 + 's';
-            document.getElementById('confetti').appendChild(confetti);
-        }
-    }
-    makeConfetti();
-    </script>
-    """, unsafe_allow_html=True)
+        st.snow()
         st.success("🚀 **SYNTHESIZE NOW** | Beats all published NPs!")
     elif total > 0.65:
         st.success("✅ **EXCELLENT** | +5% vs PBCA-PS80")
