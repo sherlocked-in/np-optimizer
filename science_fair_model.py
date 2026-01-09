@@ -159,4 +159,3 @@ Cationic NPs → greater neuron loss vs anionic
 """
 st.markdown(refs)
 
-""")
