@@ -92,7 +92,7 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     # DYNAMIC CHART VS YOUR PAPER
     st.subheader("📈 Live vs Published Research")
-    fig, ax = plt.subplots(figsize=(8,4))
+    fig, ax = plt.subplots(figsize=(4,3))
     bars = ['PBCA-PS80\n68%', 'PLA-Tf\n89%', f'YOUR DESIGN\n{bbb:.0%}']
     heights = [0.68, 0.89, bbb]
     widths  = []
