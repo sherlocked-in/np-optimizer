@@ -95,10 +95,10 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     fig, ax = plt.subplots(figsize=(4,3))
     bars = ['PBCA-PS80\n68%', 'PLA-Tf\n89%', f'YOUR DESIGN\n{bbb:.0%}']
     heights = [0.68, 0.89, bbb]
-    widths  = []
+    widths  = [0.30,0.30,0.30]
     colors = ['orange', 'green', 'purple']
     
-    bars = ax.bar(bars, heights, color=colors)
+    bars = ax.bar(bars, heights, color=colors,widths)
     ax.set_ylabel('BBB Penetration')
     ax.axhline(y=0.75, color='gold', linestyle='--', label='Industry Target')
     
