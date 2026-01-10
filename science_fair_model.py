@@ -52,7 +52,7 @@ def predict_bbb(size, charge, rmt, amt, tox, cost):
     tox_penalty = (tox-1)/4 * 0.10
     cost_penalty = (cost-1)/5 * 0.08
     
-    bbb = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost - 
+     = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost - 
               cationic_penalty - tox_penalty - cost_penalty)
     return max(0.05, bbb)
 
@@ -92,9 +92,10 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     # DYNAMIC CHART VS YOUR PAPER
     st.subheader("📈 Live vs Published Research")
-    fig, ax = plt.subplots(figsize=(10,6))
+    fig, ax = plt.subplots(figsize=(8,4))
     bars = ['PBCA-PS80\n68%', 'PLA-Tf\n89%', f'YOUR DESIGN\n{bbb:.0%}']
     heights = [0.68, 0.89, bbb]
+    widths  = []
     colors = ['orange', 'green', 'purple']
     
     bars = ax.bar(bars, heights, color=colors)
