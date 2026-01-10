@@ -90,27 +90,43 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="uni
     col1.metric("🎯 Total Score", f"{total:.0%}")
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
     
-    # CHART (small, fixed size)
-    st.subheader("📈 Live vs Published Research")
-    fig, ax = plt.subplots(figsize=(4, 3))
-    
-    bars = ['PBCA-PS80\n68%', 'PLA-Tf\n89%', f'YOUR DESIGN\n{bbb:.0%}']
-    heights = [0.68, 0.89, bbb]
-    colors = ['orange', 'green', 'purple']
-    
-    bars_obj = ax.bar(bars, heights, color=colors)
-    ax.set_ylabel('BBB Penetration')
-    ax.set_ylim(0, 1.0)
-    ax.axhline(y=0.75, color='gold', linestyle='--', label='Industry Target')
-    
-    for bar, h in zip(bars_obj, heights):
-        ax.text(bar.get_x() + bar.get_width()/2., h + 0.02, f'{h:.0%}',
-                ha='center', va='bottom', fontweight='bold')
-    
-    plt.xticks(rotation=15)
-    plt.tight_layout()
-    plt.legend()
-    st.pyplot(fig, use_container_width=False)
+   # DYNAMIC CHART - ALL 6 NPs FROM YOUR TABLE
+st.subheader("📈 Live vs ALL Published Nanoparticles")
+
+fig, ax = plt.subplots(figsize=(8, 4))  # Wider for 6 bars
+
+# YOUR FULL PUBLISHED DATA (exact match to table above)
+published_data = {
+    'PBCA-PS80': 0.68,      # 68%
+    'PLA-Tf': 0.89,         # 89%  
+    'LiposomalDox': 0.40,   # 40%
+    'CationicDendrimer': 0.72, # 72%
+    'PEGLiposome': 0.15,    # 15%
+    'FreeDrug': 0.05        # 5%
+}
+
+# Create bars for all 6 + YOUR design
+np_names = list(published_data.keys()) + [f'YOUR DESIGN\n{bbb:.0%}']
+np_scores = list(published_data.values()) + [bbb]
+
+colors = ['orange', 'green', 'red', 'purple', 'blue', 'gray', 'gold']
+
+bars_obj = ax.bar(np_names, np_scores, color=colors)
+ax.set_ylabel('BBB Penetration %')
+ax.set_ylim(0, 1.0)
+ax.axhline(y=0.75, color='black', linestyle='--', label='Industry Target 75%')
+
+# Add value labels on EVERY bar
+for bar, score in zip(bars_obj, np_scores):
+    ax.text(bar.get_x() + bar.get_width()/2., score + 0.015, f'{score:.0%}',
+            ha='center', va='bottom', fontweight='bold', fontsize=9)
+
+plt.xticks(rotation=45, ha='right')
+plt.title('Your Design vs Complete Published Dataset', pad=20)
+plt.tight_layout()
+plt.legend()
+st.pyplot(fig, use_container_width=True)
+
     
     # STATUS
     if total > 0.75:
