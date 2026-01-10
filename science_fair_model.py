@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1PyW-TBDUb7EwgFCL0BdTyzg0PdiOI_X5
 """
 # -*- coding: utf-8 -*-
-"""🧠 Glioblastoma NP Optimizer - ISEF READY - FIXED"""
+"""🧠 Glioblastoma NP Optimizer - ISEF READY - FIXED CHARTS"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -105,7 +105,7 @@ if size <= 100 and magnetic:
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
 
-# OPTIMIZE BUTTON - ALL CONTENT PROPERLY INDENTED
+# OPTIMIZE BUTTON - CHARTS ONLY RUN AFTER CLICK
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     total = bbb * 0.82
@@ -114,7 +114,23 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     col1.metric("🎯 Total Score", f"{total:.0%}")
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
     
-    # VERTICAL DUAL GRAPH - SAME SCALE + "Live Design"
+    # PENALTY WARNINGS
+    if size < 20:
+        st.error("⚠️ RENAL CLEARANCE | <20nm rapid kidney elimination [Ribovski 2021]")
+    if core == 2:
+        st.error("☠️ METAL TOXICITY | Oxidative stress [Hersh 2022]")
+    if not charge:
+        st.error("🚫 NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
+    
+    # RESULTS
+    if total > 0.75:
+        st.success("🚀 **SYNTHESIZE NOW** | Beats 5/6 published NPs! 🥇")
+    elif total > 0.65:
+        st.success("✅ **EXCELLENT** | Beats PBCA-PS80 benchmark!")
+    else:
+        st.warning("🟡 **PROMISING** | Fine-tune parameters")
+    
+    # VERTICAL DUAL GRAPH - SAME SCALE + "Live Design" (ONLY ONE TIME)
     st.subheader("📊 Live Design vs Published Benchmarks")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
 
@@ -152,22 +168,6 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
     plt.tight_layout()
     st.pyplot(fig)
-    
-    # PENALTY WARNINGS - PROPERLY INDENTED
-    if size < 20:
-        st.error("⚠️ RENAL CLEARANCE | <20nm rapid kidney elimination [Ribovski 2021]")
-    if core == 2:
-        st.error("☠️ METAL TOXICITY | Oxidative stress [Hersh 2022]")
-    if not charge:
-        st.error("🚫 NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
-    
-    # RESULTS - PROPERLY INDENTED
-    if total > 0.75:
-        st.success("🚀 **SYNTHESIZE NOW** | Beats 5/6 published NPs! 🥇")
-    elif total > 0.65:
-        st.success("✅ **EXCELLENT** | Beats PBCA-PS80 benchmark!")
-    else:
-        st.warning("🟡 **PROMISING** | Fine-tune parameters")
 
 st.markdown("---")
 st.markdown("### 📚 Model Sources [APA 7th]")
