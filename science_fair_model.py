@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1PyW-TBDUb7EwgFCL0BdTyzg0PdiOI_X5
 """
 # -*- coding: utf-8 -*-
-"""🧠 Glioblastoma NP Optimizer - ISEF READY - FIXED CHARTS"""
+"""🧠 Glioblastoma NP Optimizer - ISEF READY - NO DUPLICATES"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -15,6 +15,9 @@ import matplotlib.pyplot as plt
 import math
 
 st.set_page_config(page_title="🧠 NP Optimizer", layout="wide")
+
+# Clear matplotlib state on every run
+plt.close('all')
 
 st.title("🧠 Glioblastoma NP Optimizer")
 st.markdown("**Trained to reduce pharmaceutical expenses** | Prototype")
@@ -38,7 +41,12 @@ published_nps = pd.DataFrame({
 st.subheader("📊 Published Data (Ranked #1-6)")
 st.dataframe(published_nps, use_container_width=True)
 
+# Initialize session state
+if 'optimized' not in st.session_state:
+    st.session_state.optimized = False
+
 # BBB PREDICTION MODEL
+@st.cache_data
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
     size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
     
@@ -105,8 +113,13 @@ if size <= 100 and magnetic:
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
 
-# OPTIMIZE BUTTON - CHARTS ONLY RUN AFTER CLICK
+# OPTIMIZE BUTTON WITH SESSION STATE
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
+    st.session_state.optimized = True
+    st.experimental_rerun()
+
+# ONLY SHOW RESULTS WHEN OPTIMIZED
+if st.session_state.optimized:
     bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     total = bbb * 0.82
     
@@ -130,41 +143,42 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     else:
         st.warning("🟡 **PROMISING** | Fine-tune parameters")
     
-    # VERTICAL DUAL GRAPH - SAME SCALE + "Live Design" (ONLY ONE TIME)
+    # SINGLE CHART - NO DUPLICATES
     st.subheader("📊 Live Design vs Published Benchmarks")
+    
+    # CREATE FRESH FIGURE
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-
+    
     names = ['1. PLA-Tf', '2. CationicDend', '3. PBCA-PS80', '4. Liposomal', '5. PEG-Lip', '6. FreeDrug']
     colors = ['green','purple','orange','red','blue','gray']
-
-    # TOP: Total Score (0-1.0 scale)
-    ax1.bar(names + [f'LIVE DESIGN\n{total:.0%}'], 
-            [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total], 
-            color=colors + ['gold'])
+    
+    # TOP: Total Score - EXACTLY 7 BARS
+    total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
+    total_names = names + [f'LIVE DESIGN\n{total:.0%}']
+    ax1.bar(total_names, total_data, color=colors + ['gold'])
     ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
     ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
     ax1.set_ylim(0, 1.0)
     ax1.legend()
     ax1.tick_params(axis='x', rotation=45)
-
-    # BOTTOM: BBB Penetration (0-1.0 scale)  
-    ax2.bar(names + [f'LIVE DESIGN\n{bbb:.0%}'], 
-            [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb], 
-            color=colors + ['gold'])
+    
+    # BOTTOM: BBB Penetration - EXACTLY 7 BARS  
+    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
+    bbb_names = names + [f'LIVE DESIGN\n{bbb:.0%}']
+    ax2.bar(bbb_names, bbb_data, color=colors + ['gold'])
     ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
     ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
     ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
     ax2.set_ylim(0, 1.0)
     ax2.legend()
     ax2.tick_params(axis='x', rotation=45)
-
-    # Value labels on bars
-    for ax, data in [(ax1, [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]), 
-                     (ax2, [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb])]:
+    
+    # Value labels
+    for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
         for i, height in enumerate(data):
             ax.text(i, height + 0.01, f'{height:.0%}', 
                     ha='center', va='bottom', fontweight='bold', fontsize=9)
-
+    
     plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
     plt.tight_layout()
     st.pyplot(fig)
@@ -185,3 +199,4 @@ st.markdown("""
 
 st.markdown("### 🎯 Dual-Transcytosis [Fu 2018, Sun 2017, Zheng 2025]")
 st.markdown("**RMT+AMT (45%) > RMT (30%) > AMT (22%) > None (8%)**")
+
