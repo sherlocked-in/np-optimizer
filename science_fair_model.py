@@ -120,8 +120,10 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="uni
     st.pyplot(fig, use_container_width=True)
     
     # STATUS - PROPERLY INDENTED (4 spaces from button)
-    if total > 0.75:
-        st.success("🚀 **SYNTHESIZE NOW** | Beats 5/6 published NPs!")
+    if total > 0.89:
+        st.success("🚀 **SYNTHESIZE NOW** | Beats 6/6 published NPs!**")
+    elif total > 0.75:
+        st.success("✅ **GROUNDBREAKING** | Beats 5/6 published solutions!**")
     elif total > 0.65:
         st.success("✅ **EXCELLENT** | Beats PBCA-PS80!")
     else:
