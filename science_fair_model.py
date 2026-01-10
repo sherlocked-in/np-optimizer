@@ -9,7 +9,7 @@ Original file is located at
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 
 st.set_page_config(page_title="🧠 NP Optimizer", layout="wide")
 
