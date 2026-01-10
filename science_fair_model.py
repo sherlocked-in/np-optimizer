@@ -27,36 +27,60 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# YOUR LITERATURE TABLE
-your_nps = pd.DataFrame({
-    'NP type': ['PBCA-PS80', 'PLA-Tf', 'LiposomalDox', 'CationicDendrimer', 'PEGLiposome', 'FreeDrug'],
-    'Size (nm)': [85,100,120,50,110,650], 
-    'BBB crossing efficiency': [68,89,40,72,15,5]
-})
-st.subheader("📊Published Data")
-st.dataframe(your_nps, width="stretch")
+# INSIDE BUTTON BLOCK - Replace your chart section:
+st.subheader("📊 Live vs Published Data (Ranked)")
+
+# YOUR TABLE DATA - SORTED DESCENDING
+published_data = {
+    '1. PLA-Tf (89%)': 0.89,
+    '2. CationicDendrimer (72%)': 0.72, 
+    '3. PBCA-PS80 (68%)': 0.68,
+    '4. LiposomalDox (40%)': 0.40,
+    '5. PEGLiposome (15%)': 0.15,
+    '6. FreeDrug (5%)': 0.05
+}
+
+np_names = list(published_data.keys()) + [f'YOUR DESIGN\n{bbb:.0%}']
+np_scores = list(published_data.values()) + [bbb]
+colors = ['green', 'purple', 'orange', 'red', 'blue', 'gray', 'gold']
+
+fig, ax = plt.subplots(figsize=(10, 5))
+bars_obj = ax.bar(np_names, np_scores, color=colors)
+ax.set_ylabel('BBB Penetration %')
+ax.set_ylim(0, 1.0)
+ax.axhline(y=0.75, color='black', linestyle='--', label='Industry Target')
+
+for bar, score in zip(bars_obj, np_scores):
+    ax.text(bar.get_x() + bar.get_width()/2., score + 0.01, f'{score:.0%}',
+            ha='center', va='bottom', fontweight='bold', fontsize=9)
+
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+st.pyplot(fig)
 
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt):
-    # ORIGINAL BASELINE (your paper)
-    pbca_base = 0.68 * (1 - abs(size-85)/50)        # Gao 2006 [file:30]
-    charge_boost = 0.15 if charge else 0            # Lockman 2004
-    rmt_boost = 0.20 if rmt else 0                  # PLA-Tf 89% [file:30]
-    amt_boost = 0.10 if amt else 0                  # Dendrimer 72%
-    cationic_penalty = 0.12 if charge else 0        # Fu 2014 [file:30]
-    peg_penalty = abs(peg-2.5)/5 * 0.10             # Nance 2014
-    ligand_penalty = abs(ligand-3.0)/5 * 0.12       # Johnsen 2019
+    # BASELINE (your paper)
+    pbca_base = 0.68 * (1 - abs(size-85)/50)
+    charge_boost = 0.15 if charge else -0.30      # Neutral = -30% (cannot cross) [Lockman 2004]
+    rmt_boost = 0.20 if rmt else 0
+    amt_boost = 0.10 if amt else 0
+    cationic_penalty = 0.12 if charge else 0
+    peg_penalty = abs(peg-2.5)/5 * 0.10
+    ligand_penalty = abs(ligand-3.0)/5 * 0.12
     
-    # NEW PARAMETERS (1,2,3,6,7)
-    shape_boost = 0.08 if shape else 0              # Rods +8% [web:153]
-    core_boost = 0.12 if core == 1 else (-0.15 if core == 2 else 0)  # Lipid +12% [web:152]
-    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2)     # Optimal 3.0 [web:154]
-    stiff_penalty = abs(stiffness-25)/50 * 0.10      # 25kPa optimal [web:153]
-    disrupt_boost = 0.25 if disrupt else 0           # FUS +25% [web:152]
+    # NEW PARAMETERS
+    shape_boost = 0.08 if shape else 0
+    core_boost = 0.12 if core == 1 else (-0.20 if core == 2 else 0)  # Metal -20% toxicity [file:30]
+    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2)
+    stiff_penalty = abs(stiffness-25)/50 * 0.10
+    disrupt_boost = 0.25 if disrupt else 0
     
-    # FINAL CALCULATION
+    # RENAL CLEARANCE PENALTY <20nm
+    renal_penalty = 0.25 if size < 20 else 0       # Rapid kidney clearance [file:30]
+    
     bbb = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost + 
               shape_boost + core_boost + hydro_boost + disrupt_boost -
-              cationic_penalty - peg_penalty - ligand_penalty - stiff_penalty)
+              cationic_penalty - peg_penalty - ligand_penalty - stiff_penalty - renal_penalty)
     return max(0.05, bbb)
 
 
@@ -96,17 +120,22 @@ if charge:
     • Knudsen 2013: Neuron death vs anionic NPs
     """)
     
-# OPTIMIZE BUTTON - FULLY CORRECTED INDENTATION
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="unique_optimize"):
-    # UPDATED FUNCTION CALL - 11 parameters total
     bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt)
-    
-    # SIMPLIFIED TOTAL SCORE (no double penalties)
-    total = bbb * 0.85  # Scale for 11 parameters (prevents 115% inflation)
+    total = bbb * 0.85
     
     col1, col2 = st.columns(2)
     col1.metric("🎯 Total Score", f"{total:.0%}")
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
+    
+    # PENALTY ALERTS
+    if size < 20:
+        st.error("⚠️ **RENAL CLEARANCE** | <20nm = rapid kidney elimination [Ribovski 2021]")
+    if core == 2:
+        st.error("☠️ **METAL TOXICITY** | Oxidative stress, neuroinflammation [Hersh 2022]")
+    if not charge:
+        st.error("🚫 **NEUTRAL CHARGE** | Cannot cross BBB [Lockman 2004]")
+
     
     # DYNAMIC CHART - ALL 6 NPs FROM YOUR TABLE
     st.subheader("📈 Live vs ALL Published Nanoparticles")
