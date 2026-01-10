@@ -91,29 +91,44 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
     
    # DYNAMIC CHART VS YOUR PAPER
-st.subheader("📈 Live vs Published Research")
-
-# Force a small, fixed figure size
-fig, ax = plt.subplots(figsize=(4, 3))  # width=4 inches, height=3 inches
-
-bars = ['PBCA-PS80\n68%', 'PLA-Tf\n89%', f'YOUR DESIGN\n{bbb:.0%}']
-heights = [0.68, 0.89, bbb]
-colors = ['orange', 'green', 'purple']
-
-bars_obj = ax.bar(bars, heights, color=colors)
-ax.set_ylabel('BBB Penetration')
-ax.set_ylim(0, 1.0)  # keep y-axis from 0 to 100%
-ax.axhline(y=0.75, color='gold', linestyle='--', label='Industry Target')
-
-for bar, h in zip(bars_obj, heights):
-    ax.text(bar.get_x() + bar.get_width()/2., h + 0.02, f'{h:.0%}',
-            ha='center', va='bottom', fontweight='bold')
-
-plt.xticks(rotation=15)
-plt.tight_layout()  # prevent extra padding
-plt.legend()
-
-st.pyplot(fig, use_container_width=False)
+# OPTIMIZE BUTTON
+if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
+    bbb = predict_bbb(size, charge, rmt, amt, tox, cost)
+    total = bbb - (tox/5)*0.25 - (cost/6)*0.15
+    
+    col1, col2 = st.columns(2)
+    col1.metric("🎯 Total Score", f"{total:.0%}")
+    col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
+    
+    # ✅ CHART MOVED INSIDE BUTTON BLOCK (bbb now exists)
+    st.subheader("📈 Live vs Published Research")
+    fig, ax = plt.subplots(figsize=(4, 3))
+    
+    bars = ['PBCA-PS80\n68%', 'PLA-Tf\n89%', f'YOUR DESIGN\n{bbb:.0%}']
+    heights = [0.68, 0.89, bbb]
+    colors = ['orange', 'green', 'purple']
+    
+    bars_obj = ax.bar(bars, heights, color=colors)
+    ax.set_ylabel('BBB Penetration')
+    ax.set_ylim(0, 1.0)
+    ax.axhline(y=0.75, color='gold', linestyle='--', label='Industry Target')
+    
+    for bar, h in zip(bars_obj, heights):
+        ax.text(bar.get_x() + bar.get_width()/2., h + 0.02, f'{h:.0%}',
+                ha='center', va='bottom', fontweight='bold')
+    
+    plt.xticks(rotation=15)
+    plt.tight_layout()
+    plt.legend()
+    st.pyplot(fig, use_container_width=False)
+    
+    # STATUS (now properly indented)
+    if total > 0.75:
+        st.success("🚀 **SYNTHESIZE NOW** | Beats all published NPs!")
+    elif total > 0.65:
+        st.success("✅ **EXCELLENT** | +5% vs PBCA-PS80")
+    else:
+        st.warning("🟡 **PROMISING** | Adjust parameters")
 
     
     # STATUS
