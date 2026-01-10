@@ -26,37 +26,17 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# YOUR LITERATURE TABLE - SORTED + 1-INDEXED
+published_nps = pd.DataFrame({
+    'Rank': ['#1', '#2', '#3', '#4', '#5', '#6'],
+    'NP type': ['PLA-Tf', 'CationicDendrimer', 'PBCA-PS80', 'LiposomalDox', 'PEGLiposome', 'FreeDrug'],
+    'Size (nm)': [100, 50, 85, 120, 110, 650], 
+    'BBB crossing efficiency (%)': [89, 72, 68, 40, 15, 5]
+})
 
-# INSIDE BUTTON BLOCK - Replace your chart section:
-st.subheader("📊 Live vs Published Data (Ranked)")
+st.subheader("📊 Published Data (Ranked #1-6)")
+st.dataframe(published_nps, use_container_width=True)
 
-# YOUR TABLE DATA - SORTED DESCENDING
-published_data = {
-    '1. PLA-Tf (89%)': 0.89,
-    '2. CationicDendrimer (72%)': 0.72, 
-    '3. PBCA-PS80 (68%)': 0.68,
-    '4. LiposomalDox (40%)': 0.40,
-    '5. PEGLiposome (15%)': 0.15,
-    '6. FreeDrug (5%)': 0.05
-}
-
-np_names = list(published_data.keys()) + [f'YOUR DESIGN\n{bbb:.0%}']
-np_scores = list(published_data.values()) + [bbb]
-colors = ['green', 'purple', 'orange', 'red', 'blue', 'gray', 'gold']
-
-fig, ax = plt.subplots(figsize=(10, 5))
-bars_obj = ax.bar(np_names, np_scores, color=colors)
-ax.set_ylabel('BBB Penetration %')
-ax.set_ylim(0, 1.0)
-ax.axhline(y=0.75, color='black', linestyle='--', label='Industry Target')
-
-for bar, score in zip(bars_obj, np_scores):
-    ax.text(bar.get_x() + bar.get_width()/2., score + 0.01, f'{score:.0%}',
-            ha='center', va='bottom', fontweight='bold', fontsize=9)
-
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-st.pyplot(fig)
 
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt):
     # BASELINE (your paper)
@@ -128,43 +108,45 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="uni
     col1.metric("🎯 Total Score", f"{total:.0%}")
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
     
-    # PENALTY ALERTS
-    if size < 20:
-        st.error("⚠️ **RENAL CLEARANCE** | <20nm = rapid kidney elimination [Ribovski 2021]")
-    if core == 2:
-        st.error("☠️ **METAL TOXICITY** | Oxidative stress, neuroinflammation [Hersh 2022]")
-    if not charge:
-        st.error("🚫 **NEUTRAL CHARGE** | Cannot cross BBB [Lockman 2004]")
-
+    # ✅ CHART NOW INSIDE BUTTON (bbb exists)
+    st.subheader("📊 Live vs Published Data (Ranked)")
     
-    # DYNAMIC CHART - ALL 6 NPs FROM YOUR TABLE
-    st.subheader("📈 Live vs ALL Published Nanoparticles")
-    fig, ax = plt.subplots(figsize=(8, 4))  # Wider for 6 bars
-    
-    # YOUR FULL PUBLISHED DATA (matches your table)
+    # SORTED PUBLISHED DATA (1-indexed)
     published_data = {
-        'PBCA-PS80': 0.68, 'PLA-Tf': 0.89, 'LiposomalDox': 0.40,
-        'CationicDendrimer': 0.72, 'PEGLiposome': 0.15, 'FreeDrug': 0.05
+        '1. PLA-Tf (89%)': 0.89,
+        '2. CationicDendrimer (72%)': 0.72, 
+        '3. PBCA-PS80 (68%)': 0.68,
+        '4. LiposomalDox (40%)': 0.40,
+        '5. PEGLiposome (15%)': 0.15,
+        '6. FreeDrug (5%)': 0.05
     }
     
-    np_names = list(published_data.keys()) + [f'YOUR DESIGN\n{bbb:.0%}']
+    np_names = list(published_data.keys()) + [f"YOUR DESIGN\n{bbb:.0%}"]
     np_scores = list(published_data.values()) + [bbb]
-    colors = ['orange', 'green', 'red', 'purple', 'blue', 'gray', 'gold']
+    colors = ['green','purple','orange','red','blue','gray','gold']
     
+    fig, ax = plt.subplots(figsize=(10, 5))
     bars_obj = ax.bar(np_names, np_scores, color=colors)
     ax.set_ylabel('BBB Penetration %')
     ax.set_ylim(0, 1.0)
-    ax.axhline(y=0.75, color='black', linestyle='--', label='Industry Target 75%')
+    ax.axhline(y=0.75, color='black', linestyle='--', label='Industry Target')
     
     for bar, score in zip(bars_obj, np_scores):
-        ax.text(bar.get_x() + bar.get_width()/2., score + 0.015, f'{score:.0%}',
+        ax.text(bar.get_x() + bar.get_width()/2., score + 0.01, f'{score:.0%}',
                 ha='center', va='bottom', fontweight='bold', fontsize=9)
     
     plt.xticks(rotation=45, ha='right')
-    plt.title('Live Design vs Published Dataset', pad=20)
     plt.tight_layout()
-    plt.legend()
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig)
+    
+    # PENALTY WARNINGS
+    if size < 20:
+        st.error("⚠️ RENAL CLEARANCE | <20nm rapid kidney elimination")
+    if core == 2:
+        st.error("☠️ METAL TOXICITY | Oxidative stress, neuroinflammation")
+    if not charge:
+        st.error("🚫 NEUTRAL CHARGE | Cannot cross BBB")
+
     
     # STATUS - PROPERLY INDENTED (4 spaces from button)
     if total > 0.89:
