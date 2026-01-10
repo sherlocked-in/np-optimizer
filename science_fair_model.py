@@ -139,9 +139,10 @@ st.markdown("---")
 st.markdown("### 📚 **VALIDATED BY PUBLISHED STUDIES**")
 st.info("""
 **Dual-Transcytosis Precedents:**
-• T7/NGR nanoparticles: 5x brain delivery [ACS Appl Mater 2018]
-• AP1-NP-DOX: Best tumor kill [Oncotarget 2017]  
-• SS31-DOX: Extended survival [Int J Oncol 2025]
+
+**1. T7/NGR nanoparticles: 5x brain delivery [ACS Appl Mater 2018]**
+**2. AP1-NP-DOX: Best tumor kill [Oncotarget 2017]** 
+**3. SS31-DOX: Extended survival [Int J Oncol 2025]**
 
 **Cationic Toxicity Confirmed:**
 
