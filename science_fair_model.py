@@ -41,52 +41,52 @@ st.dataframe(published_nps, use_container_width=True)
 import math
 
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
-    # 1. BASE SIZE [Gao 2006]
-    size_factor = max(0, 0.68 * math.exp(-((size-75)/25)**2))
+    # 1. BASE SIZE (reduced baseline)
+    size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))  # DOWN from 0.68
     
-    # 2. TRANSCYTOSIS HIERARCHY - DISTINCT SCORES
+    # 2. TRANSCYTOSIS - DOMINANT FACTOR (BIG differences)
     if rmt and amt:           # DUAL = BEST
-        transcytosis = 0.35   # 35%
-    elif rmt:                 # RMT only  
-        transcytosis = 0.22   # 22%
+        transcytosis = 0.45   # 45% BASE
+    elif rmt:                 # RMT only
+        transcytosis = 0.30   # 30% BASE  
     elif amt:                 # AMT only
-        transcytosis = 0.15   # 15%
-    else:                     # NONE = FAIL
-        transcytosis = 0.05   # 5%
+        transcytosis = 0.22   # 22% BASE
+    else:                     # NONE
+        transcytosis = 0.08   # 8% BASE
     
-    # 3. PEG SWEET SPOT
+    # 3. PEG penalty
     peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
     
-    # 4. CORE: Lipid(0.12) > Polymer(0) > Metal(-0.30)
+    # 4. CORE hierarchy
     core_effect = 0.12 if core == 1 else (0.0 if core == 0 else -0.30)
     
-    # 5. PHYSICAL
-    fus_boost = 0.45 if disrupt and size >= 50 else 0.20 if disrupt else 0
-    mag_boost = 0.40 if magnetic and size >= 100 else 0
+    # 5. Physical aids (SMALLER contributions)
+    fus_boost = 0.12 if disrupt and size >= 50 else 0.06 if disrupt else 0
+    mag_boost = 0.15 if magnetic and size >= 100 else 0
     
-    # 6. CATIONIC REQUIRED
+    # 6. Charge (REQUIRED)
     if charge:
-        charge_boost = 0.15
-        tox_penalty = 0.12
+        charge_boost = 0.12
+        tox_penalty = 0.10
     else:
-        charge_boost = -0.45
+        charge_boost = -0.35
         tox_penalty = 0
     
-    # 7. OTHER
-    ligand_penalty = abs(ligand-3.0)/5 * 0.12
-    shape_boost = 0.08 if shape else 0
-    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2)
-    stiff_penalty = abs(stiffness-25)/50 * 0.10
-    renal_penalty = 0.25 if size < 20 else 0
+    # 7. Minor factors
+    ligand_penalty = abs(ligand-3.0)/5 * 0.08
+    shape_boost = 0.06 if shape else 0
+    hydro_boost = 0.08 * (1 - abs(hydro-3.0)/2)
+    stiff_penalty = abs(stiffness-25)/50 * 0.06
+    renal_penalty = 0.20 if size < 20 else 0
     
-    # CALCULATE
+    # TOTAL
     bbb = (size_factor + transcytosis + charge_boost + shape_boost + 
            hydro_boost + core_effect + mag_boost + fus_boost -
            peg_penalty - ligand_penalty - stiff_penalty - renal_penalty - tox_penalty)
     
-    # BIOLOGICAL CAPS
-    if not charge: bbb = min(bbb, 0.25)
-    if transcytosis == 0.05: bbb = min(bbb, 0.12)
+    # CAPS
+    if not charge: bbb = min(bbb, 0.20)
+    if transcytosis == 0.08: bbb = min(bbb, 0.10)
     
     return max(0.05, min(0.95, bbb))
 
