@@ -20,7 +20,7 @@ st.markdown("""
             color: white; padding: 25px; border-radius: 15px; margin: 20px 0; 
             text-align: center; font-size: 18px; line-height: 1.6; box-shadow: 0 10px 30px rgba(0,0,0,0.3)'>
 <h2 style='margin-top: 0;'>🚨 $2 BILLION PROBLEM: 98% Clinical Failures</h2>
-<p><strong>Pharmaceutical companies lose $1-2 billion per glioblastoma drug</strong> because the blood-brain barrier blocks 98% of candidates in Phase II/III trials. My <strong>AI NP Optimizer</strong> cuts development time by 18 months and saves <strong>$15M per drug</strong> using <em>multi-objective optimization</em> - balancing BBB penetration, toxicity, and cost in real-time.</p>
+<p><strong>Pharmaceutical companies lose $1-2 billion per glioblastoma drug</strong> because the blood-brain barrier blocks 98% of candidates in Phase II/III trials. My <strong>AI Nanoparticle Optimizer</strong> cuts development time and saves <strong>$15M per drug</strong> using <em>multi-objective optimization</em> - balancing BBB penetration and efficiency in real-time.</p>
 
 <p style='font-size: 16px; font-weight: bold; margin-top: 15px;'>🧠 <em> The building block toward reducing expenses and increasing efficiency. <em> </p>
 </div>
@@ -118,7 +118,7 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="uni
                 ha='center', va='bottom', fontweight='bold', fontsize=9)
     
     plt.xticks(rotation=45, ha='right')
-    plt.title('Your Design vs Complete Published Dataset', pad=20)
+    plt.title('Live Design vs Published Dataset', pad=20)
     plt.tight_layout()
     plt.legend()
     st.pyplot(fig, use_container_width=True)
