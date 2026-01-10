@@ -36,43 +36,54 @@ your_nps = pd.DataFrame({
 st.subheader("📊Published Data")
 st.dataframe(your_nps, width="stretch")
 
-def predict_bbb(size, charge, rmt, amt, peg, ligand):
-    # Base scores from your paper
-    pbca_base = 0.68 * (1 - abs(size-85)/50)  # 85nm optimal
-    charge_boost = 0.15 if charge else 0       # Cationic BBB boost
-    rmt_boost = 0.20 if rmt else 0             # PLA-Tf (your paper)
-    amt_boost = 0.10 if amt else 0             # Dendrimer
+def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt):
+    # ORIGINAL BASELINE (your paper)
+    pbca_base = 0.68 * (1 - abs(size-85)/50)        # Gao 2006 [file:30]
+    charge_boost = 0.15 if charge else 0            # Lockman 2004
+    rmt_boost = 0.20 if rmt else 0                  # PLA-Tf 89% [file:30]
+    amt_boost = 0.10 if amt else 0                  # Dendrimer 72%
+    cationic_penalty = 0.12 if charge else 0        # Fu 2014 [file:30]
+    peg_penalty = abs(peg-2.5)/5 * 0.10             # Nance 2014
+    ligand_penalty = abs(ligand-3.0)/5 * 0.12       # Johnsen 2019
     
-    # CATIONIC NEUROTOXICITY PENALTY (Fu et al. 2014)
-    cationic_penalty = 0.12 if charge else 0   
+    # NEW PARAMETERS (1,2,3,6,7)
+    shape_boost = 0.08 if shape else 0              # Rods +8% [web:153]
+    core_boost = 0.12 if core == 1 else (-0.15 if core == 2 else 0)  # Lipid +12% [web:152]
+    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2)     # Optimal 3.0 [web:154]
+    stiff_penalty = abs(stiffness-25)/50 * 0.10      # 25kPa optimal [web:153]
+    disrupt_boost = 0.25 if disrupt else 0           # FUS +25% [web:152]
     
-    # ✅ NEW: PEG DENSITY IMPACT (Nance 2014 - YOUR PAPER)
-    peg_penalty = abs(peg-2.5)/5 * 0.10  # Optimal PEG=2.5, too high/low hurts BBB
-    
-    # ✅ NEW: LIGAND DENSITY IMPACT (Johnsen 2019 - YOUR PAPER)  
-    ligand_penalty = abs(ligand-3.0)/5 * 0.12  # Optimal=3.0, too many = steric block
-    
-    bbb = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost - 
-              cationic_penalty - peg_penalty - ligand_penalty)
+    # FINAL CALCULATION
+    bbb = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost + 
+              shape_boost + core_boost + hydro_boost + disrupt_boost -
+              cationic_penalty - peg_penalty - ligand_penalty - stiff_penalty)
     return max(0.05, bbb)
 
 
-# Sliders - SCIENTIFICALLY ACCURATE FROM YOUR PAPER
+
+# SLIDERS - ORIGINAL + 5 NEW SCIENCE PARAMETERS
 col1, col2 = st.columns(2)
 with col1:
-    size = st.slider("📏 Size (nm)", 20, 200, 85, help="Optimal: 10-100nm (Hersh 2022)")
+    size = st.slider("📏 Size (nm)", 20, 200, 85)
     charge = st.selectbox("⚡ Charge", [0,1], format_func=lambda x: "Cationic" if x else "Neutral")
 with col2:
-    rmt = st.selectbox("🎯 RMT", [0,1], format_func=lambda x: "Yes (Tf/LDL)" if x else "No")
+    rmt = st.selectbox("🎯 RMT", [0,1], format_func=lambda x: "Yes" if x else "No")
     amt = st.selectbox("🧲 AMT", [0,1], format_func=lambda x: "Yes" if x else "No")
 
-col3, col4 = st.columns(2)
-with col3:
-    peg = st.slider("🛡️ PEG Density\n(stealth coating)", 1.0, 5.0, 2.5, 
-                   help="High PEG = longer circulation, low PEG = better BBB (Nance 2014)")
-with col4:
-    ligand = st.slider("🎯 Ligand Density\n(Tf/LDL receptors)", 1.0, 5.0, 3.0,
-                      help="Optimal density prevents steric hindrance (Johnsen 2019)")
+col1, col2 = st.columns(2)
+with col1:
+    peg = st.slider("🛡️ PEG Density", 1.0, 5.0, 2.5)
+    ligand = st.slider("🎯 Ligand Density", 1.0, 5.0, 3.0)
+with col2:
+    shape = st.selectbox("🔺 Shape", [0,1], format_func=lambda x: "Rod" if x else "Sphere")
+    core = st.selectbox("🧬 Core", [0,1,2], format_func=lambda x: ["Polymer","Lipid","Metal"][int(x)])
+
+col1, col2 = st.columns(2)
+with col1:
+    hydro = st.slider("💧 Hydrophobicity", 1.0, 5.0, 3.0)
+    stiffness = st.slider("🪨 Stiffness (kPa)", 1, 100, 25)
+with col2:
+    disrupt = st.selectbox("🔊 FUS Aid", [0,1], format_func=lambda x: "Yes" if x else "No")
 
 
 # ⚠️ TOXICITY WARNINGS
@@ -87,8 +98,11 @@ if charge:
     
 # OPTIMIZE BUTTON - FULLY CORRECTED INDENTATION
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="unique_optimize"):
-    bbb = predict_bbb(size, charge, rmt, amt, peg, ligand)  # ← peg, ligand
-    total = bbb - (peg/5)*0.15 - (ligand/5)*0.15           # ← peg, ligand
+    # UPDATED FUNCTION CALL - 11 parameters total
+    bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt)
+    
+    # SIMPLIFIED TOTAL SCORE (no double penalties)
+    total = bbb * 0.85  # Scale for 11 parameters (prevents 115% inflation)
     
     col1, col2 = st.columns(2)
     col1.metric("🎯 Total Score", f"{total:.0%}")
