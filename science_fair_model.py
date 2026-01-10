@@ -114,33 +114,45 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     col1.metric("🎯 Total Score", f"{total:.0%}")
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
     
-    # DUAL BAR GRAPH
-    st.subheader("📊 Your Design vs Published Benchmarks")
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-    
-    names = ['1. PLA-Tf', '2. CationicDend', '3. PBCA-PS80', '4. Liposomal', '5. PEG-Lip', '6. FreeDrug']
-    colors = ['green','purple','orange','red','blue','gray']
-    
-    # LEFT: Total Score
-    ax1.bar(names + [f'YOUR DESIGN\n{total:.0%}'], 
-            [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total], 
-            color=colors + ['gold'])
-    ax1.set_ylabel('Total Score', fontweight='bold')
-    ax1.axhline(y=0.65, color='black', linestyle='--', label='PBCA Benchmark')
-    ax1.tick_params(axis='x', rotation=45)
-    
-    # RIGHT: BBB Penetration
-    ax2.bar(names + [f'YOUR DESIGN\n{bbb:.0%}'], 
-            [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb], 
-            color=colors + ['gold'])
-    ax2.set_ylabel('BBB Penetration', fontweight='bold')
-    ax2.axhline(y=0.75, color='black', linestyle='--', label='Industry Target')
-    ax2.tick_params(axis='x', rotation=45)
-    
-    plt.suptitle('Total Score vs BBB Penetration', fontsize=16, fontweight='bold')
-    plt.tight_layout()
-    st.pyplot(fig)
-    
+# VERTICAL DUAL GRAPH - SAME SCALE + "Live Design"
+st.subheader("📊 Live Design vs Published Benchmarks")
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
+
+names = ['1. PLA-Tf', '2. CationicDend', '3. PBCA-PS80', '4. Liposomal', '5. PEG-Lip', '6. FreeDrug']
+colors = ['green','purple','orange','red','blue','gray']
+
+# TOP: Total Score (0-1.0 scale)
+ax1.bar(names + [f'LIVE DESIGN\n{total:.0%}'], 
+        [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total], 
+        color=colors + ['gold'])
+ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
+ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
+ax1.set_ylim(0, 1.0)
+ax1.legend()
+ax1.tick_params(axis='x', rotation=45)
+
+# BOTTOM: BBB Penetration (0-1.0 scale)  
+ax2.bar(names + [f'LIVE DESIGN\n{bbb:.0%}'], 
+        [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb], 
+        color=colors + ['gold'])
+ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
+ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
+ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
+ax2.set_ylim(0, 1.0)
+ax2.legend()
+ax2.tick_params(axis='x', rotation=45)
+
+# Value labels on bars
+for ax, data in [(ax1, [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]), 
+                 (ax2, [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb])]:
+    for i, height in enumerate(data):
+        ax.text(i, height + 0.01, f'{height:.0%}', 
+                ha='center', va='bottom', fontweight='bold', fontsize=9)
+
+plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
+plt.tight_layout()
+st.pyplot(fig)
+
     # PENALTY WARNINGS
     if size < 20:
         st.error("⚠️ RENAL CLEARANCE | <20nm rapid kidney elimination [Ribovski 2021]")
