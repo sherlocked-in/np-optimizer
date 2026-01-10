@@ -112,23 +112,6 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     
     # STATUS
     if total > 0.75:
-        st.markdown("""
-    <div style='text-align:center; padding:40px; background:#1a1a1a; 
-                border-radius:25px; color:gold; position:relative; overflow:hidden;'>
-        <div style='font-size:100px; animation: trophy-reveal 3s ease-out forwards;'>🏆</div>
-        <h2 style='animation: slide-up 1s ease-out 1s forwards; opacity:0;'>EFFICIENT</h2>
-    </div>
-    <style>
-    @keyframes trophy-reveal {
-        0% { transform: scale(0) rotate(-180deg); opacity:0; }
-        50% { transform: scale(1.2) rotate(0deg); opacity:1; }
-        100% { transform: scale(1) rotate(10deg); }
-    }
-    @keyframes slide-up {
-        to { opacity:1; transform: translateY(0); }
-    }
-    </style>
-    """, unsafe_allow_html=True)
         st.success("🚀 **SYNTHESIZE NOW** | Beats all published NPs!")
     elif total > 0.65:
         st.success("✅ **EXCELLENT** | +5% vs PBCA-PS80")
@@ -140,11 +123,12 @@ st.markdown("### 📚 **VALIDATED BY PUBLISHED STUDIES**")
 st.info("""
 **Dual-Transcytosis Precedents:**
 
-**1. T7/NGR nanoparticles: 5x brain delivery [ACS Appl Mater 2018]**
+**1. Fu, S., Liang, M., Wang, Y., Cui, L., Gao, C., Chu, X., ... & Gao, C. (2018). Dual-modified novel biomimetic nanocarriers improve targeting and therapeutic efficacy in glioma. ACS Applied Materials & Interfaces, 11(2), 1841-1854.**
 
-**2. AP1-NP-DOX: Best tumor kill [Oncotarget 2017]** 
+**2. Sun, Z., Yan, X., Liu, Y., Huang, L., Kong, C., Qu, X., ... & Qin, H. (2017). Application of dual targeting drug delivery system for the improvement of anti-glioma efficacy of doxorubicin. Oncotarget, 8(35), 58823.**
 
-**3. SS31-DOX: Extended survival [Int J Oncol 2025]**
+**3. Zheng, Z., Chen, J., Kang, Y., Ding, Z., Jin, C., Gan, Z., & Yu, Q. (2025). Dual-responsive nanoparticle system for enhanced blood-brain barrier crossing and glioblastoma penetration. Biomaterials, 123730.**
+    
 
 **Cationic Toxicity Confirmed:**
 
