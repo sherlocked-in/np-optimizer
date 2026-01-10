@@ -142,40 +142,46 @@ if st.session_state.optimized:
     else:
         st.warning("🟡 **PROMISING** | Fine-tune parameters")
     
-    # CHARTS - SINGLE EXECUTION
-    st.subheader("📊 Live Design vs Published Benchmarks")
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-    
-    names = ['1. PLA-Tf', '2. CationicDend', '3. PBCA-PS80', '4. Liposomal', '5. PEG-Lip', '6. FreeDrug']
-    colors = ['green','purple','orange','red','blue','gray']
-    
-    # TOP: Total Score (7 bars exactly)
-    total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
-    ax1.bar(names + [f'LIVE DESIGN\n{total:.0%}'], total_data, color=colors + ['gold'])
-    ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
-    ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
-    ax1.set_ylim(0, 1.0)
-    ax1.legend()
-    ax1.tick_params(axis='x', rotation=45)
-    
-    # BOTTOM: BBB Penetration (7 bars exactly)
-    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
-    ax2.bar(names + [f'LIVE DESIGN\n{bbb:.0%}'], bbb_data, color=colors + ['gold'])
-    ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
-    ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
-    ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
-    ax2.set_ylim(0, 1.0)
-    ax2.legend()
-    ax2.tick_params(axis='x', rotation=45)
-    
-    # Value labels
-    for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
-        for i, height in enumerate(data):
-            ax.text(i, height + 0.01, f'{height:.0%}', ha='center', va='bottom', fontweight='bold', fontsize=9)
-    
-    plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
-    plt.tight_layout()
-    st.pyplot(fig)
+   # SINGLE CHART - PERFECT SPACING, NO OVERLAP
+st.subheader("📊 Live Design vs Published Benchmarks")
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
+
+names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug']  # ✅ SHORT NAMES
+colors = ['green','purple','orange','red','blue','gray']
+
+# TOP: Total Score - EXACTLY 7 BARS
+total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
+ax1.bar(range(7), total_data, color=colors + ['gold'], width=0.8)
+ax1.set_xticks(range(7))
+ax1.set_xticklabels(names + ['**LIVE**\n{:.0%}'.format(total)], fontsize=11)
+ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
+ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
+ax1.set_ylim(0, 1.0)
+ax1.legend()
+ax1.tick_params(axis='x', rotation=0)  # ✅ NO ROTATION
+
+# BOTTOM: BBB Penetration - EXACTLY 7 BARS
+bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
+ax2.bar(range(7), bbb_data, color=colors + ['gold'], width=0.8)
+ax2.set_xticks(range(7))
+ax2.set_xticklabels(names + ['**LIVE**\n{:.0%}'.format(bbb)], fontsize=11)
+ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
+ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
+ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
+ax2.set_ylim(0, 1.0)
+ax2.legend()
+ax2.tick_params(axis='x', rotation=0)
+
+# Value labels on bars
+for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
+    for i, height in enumerate(data):
+        ax.text(i, height + 0.02, f'{height:.0%}', 
+                ha='center', va='bottom', fontweight='bold', fontsize=10)
+
+plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
+plt.tight_layout()
+st.pyplot(fig)
+
 
 st.markdown("---")
 st.markdown("### 📚 Model Sources [APA 7th]")
