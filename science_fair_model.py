@@ -38,30 +38,43 @@ st.subheader("📊 Published Data (Ranked #1-6)")
 st.dataframe(published_nps, use_container_width=True)
 
 
-def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt):
-    # BASELINE (your paper)
-    pbca_base = 0.68 * (1 - abs(size-85)/50)
-    charge_boost = 0.15 if charge else -0.30      # Neutral = -30% (cannot cross) [Lockman 2004]
-    rmt_boost = 0.20 if rmt else 0
-    amt_boost = 0.10 if amt else 0
-    cationic_penalty = 0.12 if charge else 0
-    peg_penalty = abs(peg-2.5)/5 * 0.10
-    ligand_penalty = abs(ligand-3.0)/5 * 0.12
+import math
+
+def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
+    # 1. SIZE: Gaussian 50-100nm peak (Nowak 2020)
+    size_factor = max(0, 0.68 * math.exp(-((size-75)/25)**2))
     
-    # NEW PARAMETERS
-    shape_boost = 0.08 if shape else 0
-    core_boost = 0.12 if core == 1 else (-0.20 if core == 2 else 0)  # Metal -20% toxicity [file:30]
-    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2)
-    stiff_penalty = abs(stiffness-25)/50 * 0.10
-    disrupt_boost = 0.25 if disrupt else 0
+    # 2. DUAL-TRANSCYTOSIS: RMT+AMT → +35% synergy (Fu 2018, Sun 2017, Zheng 2025)
+    rmt_amt_combined = 0.35 if rmt and amt else (0.20 if rmt else 0) + (0.10 if amt else 0)
     
-    # RENAL CLEARANCE PENALTY <20nm
-    renal_penalty = 0.25 if size < 20 else 0       # Rapid kidney clearance [file:30]
+    # 3. PEG: Narrower optimal 2.0-3.0 (Zhang 2024)
+    peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
     
-    bbb = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost + 
-              shape_boost + core_boost + hydro_boost + disrupt_boost -
-              cationic_penalty - peg_penalty - ligand_penalty - stiff_penalty - renal_penalty)
+    # 4. METAL TOXICITY: -30% severity (Hersh 2022)
+    core_penalty = -0.30 if core == 2 else (0.12 if core == 1 else 0)  # Lipid +12%
+    
+    # 5. FUS: Size-dependent (Gkountas 2024)
+    fus_boost = 0.45 if disrupt and size >= 50 else (0.20 if disrupt and size < 50 else 0)
+    
+    # 6. MAGNETIC: 100nm+ only (Gkountas 2024)
+    mag_boost = 0.40 if magnetic and size >= 100 else 0
+    
+    # EXISTING PARAMETERS
+    charge_boost = 0.15 if charge else -0.30  # Lockman 2004
+    ligand_penalty = abs(ligand-3.0)/5 * 0.12  # Johnsen 2019
+    shape_boost = 0.08 if shape else 0  # Dan 2020
+    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2)  # Asimakidou 2024
+    stiff_penalty = abs(stiffness-25)/50 * 0.10  # Dan 2020
+    renal_penalty = 0.25 if size < 20 else 0  # Ribovski 2021
+    cationic_penalty = 0.12 if charge else 0  # Fu 2014
+    
+    # FINAL CALCULATION
+    bbb = min(0.95, size_factor + rmt_amt_combined + charge_boost + shape_boost + 
+              hydro_boost + mag_boost + fus_boost - peg_penalty - ligand_penalty - 
+              core_penalty - stiff_penalty - renal_penalty - cationic_penalty)
+    
     return max(0.05, bbb)
+
 
 
 
@@ -88,6 +101,7 @@ with col1:
     stiffness = st.slider("🪨 Stiffness (kPa)", 1, 100, 25)
 with col2:
     disrupt = st.selectbox("🔊 FUS Aid", [0,1], format_func=lambda x: "Yes" if x else "No")
+    magnetic = st.selectbox("🧲 Magnetic Field", [0,1], format_func=lambda x: "Yes (100nm+)" if x else "No")
 
 
 # ⚠️ TOXICITY WARNINGS
@@ -101,8 +115,8 @@ if charge:
     """)
     
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="unique_optimize"):
-    bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt)
-    total = bbb * 0.85
+  bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
+total = bbb * 0.82  # Adjusted scaling for 13 parameters
     
     col1, col2 = st.columns(2)
     col1.metric("🎯 Total Score", f"{total:.0%}")
