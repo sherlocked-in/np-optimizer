@@ -41,64 +41,63 @@ st.dataframe(published_nps, use_container_width=True)
 import math
 
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
-    # 1. SIZE: Gaussian 50-100nm peak (Nowak 2020)
+    # 1. SIZE: Gaussian 50-100nm peak [Gao 2006][web:235]
     size_factor = max(0, 0.68 * math.exp(-((size-75)/25)**2))
     
-    # 2. DUAL-TRANSCYTOSIS: RMT+AMT → +35% synergy (Fu 2018, Sun 2017, Zheng 2025)
-    # existing:
+    # 2. DUAL-TRANSCYTOSIS: RMT+AMT → +35% [Fu 2018]
     rmt_amt_combined = 0.35 if rmt and amt else (0.20 if rmt else 0) + (0.10 if amt else 0)
-
-# new global throttle if neither is used:
-    if (not rmt) and (not amt):
-    bbb *= 0.20   # cut to 20% of its previous value
-
     
-    # 3. PEG: Narrower optimal 2.0-3.0 (Zhang 2024)
+    # 3. NO RMT & NO AMT → 80% penalty [web:154]
+    if not rmt and not amt:
+        rmt_amt_combined *= 0.20
+    
+    # 4. PEG: Optimal 2.0-3.0 [Nance 2014]
     peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
     
-    # 4. METAL TOXICITY: -30% severity (Hersh 2022)
-    # core: 0=Polymer, 1=Lipid, 2=Metal
-    if core == 1:          # lipid
-    core_effect = +0.12
-    elif core == 0:        # polymer
-    core_effect = 0.00  # baseline
-    elif core == 2:        # metal
-    core_effect = -0.30
-
+    # 5. CORE HIERARCHY: Lipid > Polymer > Metal [web:154][file:30]
+    if core == 1:      # Lipid
+        core_effect = 0.12
+    elif core == 0:    # Polymer  
+        core_effect = 0.00
+    else:              # Metal
+        core_effect = -0.30
     
-    # 5. FUS: Size-dependent (Gkountas 2024)
-    fus_boost = 0.45 if disrupt and size >= 50 else (0.20 if disrupt and size < 50 else 0)
+    # 6. FUS size-dependent [Mainprize 2019]
+    fus_boost = 0.45 if disrupt and size >= 50 else (0.20 if disrupt else 0)
     
-    # 6. MAGNETIC: 100nm+ only (Gkountas 2024)
+    # 7. MAGNETIC only >100nm [web:152]
     mag_boost = 0.40 if magnetic and size >= 100 else 0
     
-    # EXISTING PARAMETERS
-    if charge:  # cationic
-    charge_boost = 0.15      # extra help on top of size/RMT/AMT
-    cationic_penalty = 0.12  # toxicity penalty you already had
-    else:       # neutral
-    charge_boost = -0.40     # strong drop if not cationic
-    cationic_penalty = 0.0
-
-    ligand_penalty = abs(ligand-3.0)/5 * 0.12  # Johnsen 2019
-    shape_boost = 0.08 if shape else 0  # Dan 2020
-    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2)  # Asimakidou 2024
-    stiff_penalty = abs(stiffness-25)/50 * 0.10  # Dan 2020
-    renal_penalty = 0.25 if size < 20 else 0  # Ribovski 2021
+    # 8. CATIONIC REQUIRED [Lockman 2004][web:159]
+    if charge:
+        charge_boost = 0.15
+        cationic_penalty = 0.12
+    else:
+        charge_boost = -0.45      # Significant drop
+        cationic_penalty = 0.0
+    
+    # Other penalties (sweet spots)
+    ligand_penalty = abs(ligand-3.0)/5 * 0.12   # Johnsen 2019
+    shape_boost = 0.08 if shape else 0          # Dan 2020
+    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2) # Asimakidou 2024
+    stiff_penalty = abs(stiffness-25)/50 * 0.10 # Dan 2020
+    renal_penalty = 0.25 if size < 20 else 0    # Ribovski 2021
+    
+    # BASE CALCULATION
+    bbb = (size_factor + rmt_amt_combined + charge_boost + shape_boost + 
+           hydro_boost + mag_boost + fus_boost + core_effect -
+           peg_penalty - ligand_penalty - stiff_penalty - renal_penalty - cationic_penalty)
+    
+    # HARD CAPS [web:152][web:154]
     if not charge:
-    bbb = min(bbb, 0.25)  # hard ceiling for neutral particles
+        bbb = min(bbb, 0.25)  # Neutral ceiling
+    if not rmt and not amt:
+        bbb = min(bbb, 0.15)  # No targeting ceiling
     if disrupt and magnetic and size >= 100:
-    bbb = min(bbb, 0.90)  # do not let it exceed 90% even with both
-
-
+        bbb = min(bbb, 0.90)  # Physics limit
     
-    # FINAL CALCULATION
-    bbb = min(0.95, size_factor + rmt_amt_combined + charge_boost + shape_boost +
-          hydro_boost + mag_boost + fus_boost + core_effect
-          - peg_penalty - ligand_penalty - stiff_penalty - renal_penalty - cationic_penalty)
+    return max(0.05, min(0.95, bbb))
 
-    
-    return max(0.05, bbb)
 
 
 
@@ -126,10 +125,12 @@ with col1:
     stiffness = st.slider("🪨 Stiffness (kPa)", 1, 100, 25)
 with col2:
     disrupt = st.selectbox("🔊 FUS Aid", [0,1], format_func=lambda x: "Yes" if x else "No")
-    magnetic = st.selectbox("🧲 Magnetic Field", [0,1], format_func=lambda x: "Yes" if x else "No")
+    magnetic = st.selectbox("🧲 Magnetic Field", [0,1], format_func=lambda x: "Yes (100nm+)" if x else "No")
 
-    if size <= 100 and magnetic:
-    st.warning("🧲 Magnetic guidance is only effective for NPs > 100 nm; ignored in model for this size.")
+# Magnetic warning (de-indent from col2)
+if size <= 100 and magnetic:
+    st.warning("🧲 Magnetic guidance only effective for NPs > 100 nm")
+
 
 
 
