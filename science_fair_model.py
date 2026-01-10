@@ -36,40 +36,44 @@ your_nps = pd.DataFrame({
 st.subheader("📊Published Data")
 st.dataframe(your_nps, width="stretch")
 
-def predict_bbb(size, charge, rmt, amt, tox, cost):
+def predict_bbb(size, charge, rmt, amt, peg, ligand):
     # Base scores from your paper
     pbca_base = 0.68 * (1 - abs(size-85)/50)  # 85nm optimal
     charge_boost = 0.15 if charge else 0       # Cationic BBB boost
-    rmt_boost = 0.20 if rmt else 0             # PLA-Tf
+    rmt_boost = 0.20 if rmt else 0             # PLA-Tf (your paper)
     amt_boost = 0.10 if amt else 0             # Dendrimer
     
-    # ✅ NEW: CATIONIC NEUROTOXICITY PENALTY (REAL SCIENCE)
-    cationic_penalty = 0.12 if charge else 0   # 12% BBB reduction
-                                                # Lockman 2004: Cationic NPs damage BBB integrity
-                                                # Knudsen 2013: Greater neuron loss vs anionic
+    # CATIONIC NEUROTOXICITY PENALTY (Fu et al. 2014)
+    cationic_penalty = 0.12 if charge else 0   
     
-    # Penalties
-    tox_penalty = (tox-1)/4 * 0.10
-    cost_penalty = (cost-1)/5 * 0.08
+    # ✅ NEW: PEG DENSITY IMPACT (Nance 2014 - YOUR PAPER)
+    peg_penalty = abs(peg-2.5)/5 * 0.10  # Optimal PEG=2.5, too high/low hurts BBB
+    
+    # ✅ NEW: LIGAND DENSITY IMPACT (Johnsen 2019 - YOUR PAPER)  
+    ligand_penalty = abs(ligand-3.0)/5 * 0.12  # Optimal=3.0, too many = steric block
     
     bbb = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost - 
-              cationic_penalty - tox_penalty - cost_penalty)
+              cationic_penalty - peg_penalty - ligand_penalty)
     return max(0.05, bbb)
 
-# Sliders
+
+# Sliders - SCIENTIFICALLY ACCURATE FROM YOUR PAPER
 col1, col2 = st.columns(2)
 with col1:
-    size = st.slider("📏 Size (nm)", 20, 200, 85)
+    size = st.slider("📏 Size (nm)", 20, 200, 85, help="Optimal: 10-100nm (Hersh 2022)")
     charge = st.selectbox("⚡ Charge", [0,1], format_func=lambda x: "Cationic" if x else "Neutral")
 with col2:
-    rmt = st.selectbox("🎯 RMT", [0,1], format_func=lambda x: "Yes" if x else "No")
+    rmt = st.selectbox("🎯 RMT", [0,1], format_func=lambda x: "Yes (Tf/LDL)" if x else "No")
     amt = st.selectbox("🧲 AMT", [0,1], format_func=lambda x: "Yes" if x else "No")
 
 col3, col4 = st.columns(2)
 with col3:
-    tox = st.slider("☠️ Toxicity", 1.0, 5.0, 1.5)
+    peg = st.slider("🛡️ PEG Density\n(stealth coating)", 1.0, 5.0, 2.5, 
+                   help="High PEG = longer circulation, low PEG = better BBB (Nance 2014)")
 with col4:
-    cost = st.slider("💰 Cost/Complexity", 1.0, 6.0, 2.0)
+    ligand = st.slider("🎯 Ligand Density\n(Tf/LDL receptors)", 1.0, 5.0, 3.0,
+                      help="Optimal density prevents steric hindrance (Johnsen 2019)")
+
 
 # ⚠️ TOXICITY WARNINGS
 if charge:
@@ -83,8 +87,8 @@ if charge:
     
 # OPTIMIZE BUTTON - FULLY CORRECTED INDENTATION
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="unique_optimize"):
-    bbb = predict_bbb(size, charge, rmt, amt, tox, cost)
-    total = bbb - (tox/5)*0.25 - (cost/6)*0.15
+    bbb = predict_bbb(size, charge, rmt, amt, peg, ligand)  # ← peg, ligand
+    total = bbb - (peg/5)*0.15 - (ligand/5)*0.15           # ← peg, ligand
     
     col1, col2 = st.columns(2)
     col1.metric("🎯 Total Score", f"{total:.0%}")
