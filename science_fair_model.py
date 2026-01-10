@@ -115,8 +115,8 @@ if charge:
     """)
     
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="unique_optimize"):
-  bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
-total = bbb * 0.82  # Adjusted scaling for 13 parameters
+    bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
+    total = bbb * 0.82  # Adjusted scaling for 13 parameters
     
     col1, col2 = st.columns(2)
     col1.metric("🎯 Total Score", f"{total:.0%}")
