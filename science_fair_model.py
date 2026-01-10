@@ -182,20 +182,28 @@ plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontwei
 plt.tight_layout()
 st.pyplot(fig)
 
-
 st.markdown("---")
+
+# MODEL SOURCES - Bulleted list format
 st.markdown("### 📚 Model Sources [APA 7th]")
 st.markdown("""
-**Asimakidou et al. (2024)** - Hydrophobicity optimal 3.0  
-**Dan et al. (2020)** - Shape +6%, stiffness 25kPa  
-**Fu et al. (2014)** - Cationic toxicity -10%  
-**Gao & Jiang (2006)** - Size optimal ~75nm  
-**Hersh et al. (2022)** - Metal toxicity -30%  
-**Johnsen et al. (2019)** - Ligand density optimal 3.0  
-**Lockman et al. (2004)** - Cationic +12%, neutral -35%  
-**Nance et al. (2014)** - PEG density 2.0-3.0 optimal  
-**Wang et al. (2024)** - Lipid core +12%
+- Asimakidou et al. (2024) - Hydrophobicity optimal 3.0
+- Dan et al. (2020) - Shape +6%, stiffness 25kPa  
+- Fu et al. (2014) - Cationic toxicity -10%
+- Gao & Jiang (2006) - Size optimal ~75nm
+- Hersh et al. (2022) - Metal toxicity -30%
+- Johnsen et al. (2019) - Ligand density optimal 3.0
+- Lockman et al. (2004) - Cationic +12%, neutral -35%
+- Nance et al. (2014) - PEG density 2.0-3.0 optimal
+- Wang et al. (2024) - Lipid core +12%
 """)
 
-st.markdown("### 🎯 Dual-Transcytosis [Fu 2018, Sun 2017, Zheng 2025]")
-st.markdown("**RMT+AMT (45%) > RMT (30%) > AMT (22%) > None (8%)**")
+# DUAL-TRANSCYTOSIS - SEPARATE BULLETED LIST
+st.markdown("### 🎯 Dual-Transcytosis References")
+st.markdown("""
+- Fu et al. (2018) - RMT mechanisms (30%)
+- Sun et al. (2017) - AMT pathways (22%)
+- Zheng et al. (2025) - Dual RMT+AMT synergy (45%)
+- **Combined: RMT+AMT (45%) > RMT (30%) > AMT (22%) > None (8%)**
+""")
+
