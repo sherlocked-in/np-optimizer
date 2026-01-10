@@ -146,36 +146,43 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="uni
     col1.metric("🎯 Total Score", f"{total:.0%}")
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
     
-    # ✅ CHART NOW INSIDE BUTTON (bbb exists)
-    st.subheader("📊 Live vs Published Data (Ranked)")
-    
-    # SORTED PUBLISHED DATA (1-indexed)
-    published_data = {
-        '1. PLA-Tf (89%)': 0.89,
-        '2. CationicDendrimer (72%)': 0.72, 
-        '3. PBCA-PS80 (68%)': 0.68,
-        '4. LiposomalDox (40%)': 0.40,
-        '5. PEGLiposome (15%)': 0.15,
-        '6. FreeDrug (5%)': 0.05
-    }
-    
-    np_names = list(published_data.keys()) + [f"YOUR DESIGN\n{bbb:.0%}"]
-    np_scores = list(published_data.values()) + [bbb]
-    colors = ['green','purple','orange','red','blue','gray','gold']
-    
-    fig, ax = plt.subplots(figsize=(10, 5))
-    bars_obj = ax.bar(np_names, np_scores, color=colors)
-    ax.set_ylabel('BBB Penetration %')
-    ax.set_ylim(0, 1.0)
-    ax.axhline(y=0.75, color='black', linestyle='--', label='Industry Target')
-    
-    for bar, score in zip(bars_obj, np_scores):
-        ax.text(bar.get_x() + bar.get_width()/2., score + 0.01, f'{score:.0%}',
-                ha='center', va='bottom', fontweight='bold', fontsize=9)
-    
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    st.pyplot(fig)
+# DUAL BAR GRAPH: Total Score vs BBB Penetration
+st.subheader("📊 Your Design vs Published Benchmarks")
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# LEFT: Total Score vs Published
+published_totals = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04]  # 85% of BBB scores
+names = ['1. PLA-Tf', '2. CationicDend', '3. PBCA-PS80', '4. Liposomal', '5. PEG-Lip', '6. FreeDrug']
+colors = ['green','purple','orange','red','blue','gray']
+
+bars1 = ax1.bar(names + [f'YOUR DESIGN\n{total:.0%}'], 
+                published_totals + [total], color=colors + ['gold'])
+ax1.set_ylabel('**Total Score**', fontweight='bold')
+ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.7, label='PBCA Benchmark')
+ax1.legend()
+ax1.tick_params(axis='x', rotation=45)
+
+# RIGHT: BBB Penetration vs Published  
+bars2 = ax2.bar(names + [f'YOUR DESIGN\n{bbb:.0%}'], 
+                [0.89, 0.72, 0.68, 0.40, 0.15, 0.05] + [bbb], 
+                color=colors + ['gold'])
+ax2.set_ylabel('**BBB Penetration**', fontweight='bold')
+ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.7, label='Industry Target')
+ax2.legend()
+ax2.tick_params(axis='x', rotation=45)
+
+# Add value labels
+for ax, bars in [(ax1, bars1), (ax2, bars2)]:
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height + 0.01, 
+                f'{height:.0%}', ha='center', va='bottom', fontweight='bold')
+
+plt.suptitle('Total Score vs BBB Penetration', fontsize=16, fontweight='bold')
+plt.tight_layout()
+st.pyplot(fig)
+
     
     # PENALTY WARNINGS
     if size < 20:
