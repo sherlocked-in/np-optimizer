@@ -52,7 +52,7 @@ def predict_bbb(size, charge, rmt, amt, tox, cost):
     tox_penalty = (tox-1)/4 * 0.10
     cost_penalty = (cost-1)/5 * 0.08
     
-     = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost - 
+    bbb = min(0.95, pbca_base + charge_boost + rmt_boost + amt_boost - 
               cationic_penalty - tox_penalty - cost_penalty)
     return max(0.05, bbb)
 
