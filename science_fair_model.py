@@ -81,8 +81,8 @@ if charge:
     • Knudsen 2013: Neuron death vs anionic NPs
     """)
     
-# OPTIMIZE BUTTON
-if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
+# OPTIMIZE BUTTON (UNIQUE KEY FIX)
+if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True, key="unique_optimize"):
     bbb = predict_bbb(size, charge, rmt, amt, tox, cost)
     total = bbb - (tox/5)*0.25 - (cost/6)*0.15
     
@@ -90,17 +90,7 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     col1.metric("🎯 Total Score", f"{total:.0%}")
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
     
-   # DYNAMIC CHART VS YOUR PAPER
-# OPTIMIZE BUTTON
-if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
-    bbb = predict_bbb(size, charge, rmt, amt, tox, cost)
-    total = bbb - (tox/5)*0.25 - (cost/6)*0.15
-    
-    col1, col2 = st.columns(2)
-    col1.metric("🎯 Total Score", f"{total:.0%}")
-    col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
-    
-    # ✅ CHART MOVED INSIDE BUTTON BLOCK (bbb now exists)
+    # CHART (small, fixed size)
     st.subheader("📈 Live vs Published Research")
     fig, ax = plt.subplots(figsize=(4, 3))
     
@@ -122,15 +112,6 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     plt.legend()
     st.pyplot(fig, use_container_width=False)
     
-    # STATUS (now properly indented)
-    if total > 0.75:
-        st.success("🚀 **SYNTHESIZE NOW** | Beats all published NPs!")
-    elif total > 0.65:
-        st.success("✅ **EXCELLENT** | +5% vs PBCA-PS80")
-    else:
-        st.warning("🟡 **PROMISING** | Adjust parameters")
-
-    
     # STATUS
     if total > 0.75:
         st.success("🚀 **SYNTHESIZE NOW** | Beats all published NPs!")
@@ -138,6 +119,7 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
         st.success("✅ **EXCELLENT** | +5% vs PBCA-PS80")
     else:
         st.warning("🟡 **PROMISING** | Adjust parameters")
+
 
 st.markdown("---")
 st.markdown("### 📚 **VALIDATED BY PUBLISHED STUDIES**")
