@@ -41,62 +41,64 @@ st.dataframe(published_nps, use_container_width=True)
 import math
 
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
-    # 1. SIZE: Gaussian 50-100nm peak [Gao 2006][web:235]
+    # 1. BASE SIZE FACTOR [Gao & Jiang, 2006]
     size_factor = max(0, 0.68 * math.exp(-((size-75)/25)**2))
     
-    # 2. DUAL-TRANSCYTOSIS: RMT+AMT → +35% [Fu 2018]
-    rmt_amt_combined = 0.35 if rmt and amt else (0.20 if rmt else 0) + (0.10 if amt else 0)
+    # 2. TRANSCYTOSIS - SINGLE WORKS, DUAL >> SINGLE [Fu et al., 2018][web:241]
+    if rmt and amt:                    # DUAL: Best (35%)
+        transcytosis_boost = 0.35
+    elif rmt:                          # RMT only: Good (22%)
+        transcytosis_boost = 0.22
+    elif amt:                          # AMT only: Fair (15%)
+        transcytosis_boost = 0.15
+    else:                              # NONE: Fails (<5%)
+        transcytosis_boost = 0.05
     
-    # 3. NO RMT & NO AMT → 80% penalty [web:154]
-    if not rmt and not amt:
-        rmt_amt_combined *= 0.20
-    
-    # 4. PEG: Optimal 2.0-3.0 [Nance 2014]
+    # 3. PEG SWEET SPOT [Nance et al., 2014]
     peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
     
-    # 5. CORE HIERARCHY: Lipid > Polymer > Metal [web:154][file:30]
-    if core == 1:      # Lipid
+    # 4. CORE HIERARCHY: Lipid > Polymer > Metal [Hersh et al., 2022]
+    if core == 1:      # Lipid best
         core_effect = 0.12
-    elif core == 0:    # Polymer  
+    elif core == 0:    # Polymer baseline
         core_effect = 0.00
-    else:              # Metal
+    else:              # Metal toxic
         core_effect = -0.30
     
-    # 6. FUS size-dependent [Mainprize 2019]
+    # 5. PHYSICAL AIDS [Mainprize et al., 2019]
     fus_boost = 0.45 if disrupt and size >= 50 else (0.20 if disrupt else 0)
-    
-    # 7. MAGNETIC only >100nm [web:152]
     mag_boost = 0.40 if magnetic and size >= 100 else 0
     
-    # 8. CATIONIC REQUIRED [Lockman 2004][web:159]
+    # 6. CATIONIC REQUIRED [Lockman et al., 2004]
     if charge:
         charge_boost = 0.15
         cationic_penalty = 0.12
     else:
-        charge_boost = -0.45      # Significant drop
+        charge_boost = -0.45
         cationic_penalty = 0.0
     
-    # Other penalties (sweet spots)
-    ligand_penalty = abs(ligand-3.0)/5 * 0.12   # Johnsen 2019
-    shape_boost = 0.08 if shape else 0          # Dan 2020
-    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2) # Asimakidou 2024
-    stiff_penalty = abs(stiffness-25)/50 * 0.10 # Dan 2020
-    renal_penalty = 0.25 if size < 20 else 0    # Ribovski 2021
+    # 7. OTHER PARAMETERS
+    ligand_penalty = abs(ligand-3.0)/5 * 0.12
+    shape_boost = 0.08 if shape else 0
+    hydro_boost = 0.15 * (1 - abs(hydro-3.0)/2)
+    stiff_penalty = abs(stiffness-25)/50 * 0.10
+    renal_penalty = 0.25 if size < 20 else 0
     
-    # BASE CALCULATION
-    bbb = (size_factor + rmt_amt_combined + charge_boost + shape_boost + 
+    # BASE SCORE
+    bbb = (size_factor + transcytosis_boost + charge_boost + shape_boost + 
            hydro_boost + mag_boost + fus_boost + core_effect -
            peg_penalty - ligand_penalty - stiff_penalty - renal_penalty - cationic_penalty)
     
-    # HARD CAPS [web:152][web:154]
+    # HARD BIOLOGICAL CAPS [web:152][web:154]
     if not charge:
         bbb = min(bbb, 0.25)  # Neutral ceiling
     if not rmt and not amt:
-        bbb = min(bbb, 0.15)  # No targeting ceiling
-    if disrupt and magnetic and size >= 100:
-        bbb = min(bbb, 0.90)  # Physics limit
+        bbb = min(bbb, 0.12)  # No targeting ceiling
+    if core == 2:
+        bbb = min(bbb, 0.40)  # Metal toxicity ceiling
     
     return max(0.05, min(0.95, bbb))
+
 
 
 
