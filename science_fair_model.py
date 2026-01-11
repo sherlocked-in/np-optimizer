@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1PyW-TBDUb7EwgFCL0BdTyzg0PdiOI_X5
 """
 # -*- coding: utf-8 -*-
-"""🧠 Glioblastoma Nanoparticle Optimizer"""
+"""🧠 Glioblastoma Nanoparticle Optimizer - NO TOP 3"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -40,12 +40,12 @@ published_nps = pd.DataFrame({
 st.subheader("📊 Published Data (Ranked #1-6)")
 st.dataframe(published_nps, use_container_width=True)
 
-# BBB PREDICTION MODEL
+# BBB PREDICTION MODEL (with >120nm penalty)
 @st.cache_data
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
     size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
     
-    # 👇 NEW: Penalty for large NPs >120nm [Ohta 2020, size-dependent clearance]
+    # Penalty for large NPs >120nm [Ohta 2020]
     size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
     
     if rmt and amt: transcytosis = 0.45
@@ -109,17 +109,15 @@ with col2:
     disrupt = st.selectbox("🔊 FUS Aid", [0,1], format_func=lambda x: "Yes" if x else "No")
     magnetic = st.selectbox("🧲 Magnetic Field", [0,1], format_func=lambda x: "Yes (100nm+)" if x else "No")
 
+# WARNINGS
 if size <= 100 and magnetic:
     st.warning("🧲 Magnetic guidance only effective for NPs > 100 nm")
-
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
-
 if size > 120:
     st.warning("⚠️ **SIZE PENALTY** | >120nm reduces BBB crossing due to liver/spleen clearance [Ohta 2020]")
 
-
-# LIVE PREVIEW (Fixed sensitivity plot)
+# LIVE PREVIEW
 live_bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
 st.subheader("📈 Live Parameter Preview")
 st.info(f"**Current BBB Score: {live_bbb:.0%}** | Adjust sliders to see real-time changes")
@@ -133,25 +131,10 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     st.session_state.optimized = True
     st.rerun()
 
-# RESULTS SECTION (Fixed structure)
+# RESULTS SECTION (Top 3 REMOVED)
 if st.session_state.optimized:
     bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     total = bbb * 0.82
-    
-    # TOP 3 RECOMMENDATIONS (Fixed)
-    def get_top_configs():
-        best = []
-        for s in [75, 85, 95]:
-            score = predict_bbb(s, 1, 1, 0, 2.5, 3.0, 1, 1, 3.0, 25, 1, 0)
-            best.append({'size':s, 'score':score*0.82})
-        return sorted(best, key=lambda x: x['score'], reverse=True)[:3]
-    
-    top3 = get_top_configs()
-    st.subheader("🎯 Top 3 Recommended Designs")
-    col1, col2, col3 = st.columns(3)
-    for i, config in enumerate(top3):
-        with eval(f"col{i+1}"):
-            st.metric(f"#{i+1}", f"{config['score']:.0%}", f"Size: {config['size']}nm")
     
     # MAIN METRICS
     col1, col2 = st.columns(2)
@@ -174,7 +157,7 @@ if st.session_state.optimized:
     else:
         st.warning("🟡 **PROMISING** | Fine-tune parameters")
 
-# BENCHMARK CHART (Moved inside optimized block to avoid errors)
+# BENCHMARK CHART
 if st.session_state.optimized:
     st.subheader("📊 Live Design vs Published Benchmarks")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
@@ -185,7 +168,6 @@ if st.session_state.optimized:
     total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
     bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
 
-    # TOP: Total Score
     ax1.bar(range(7), total_data, color=colors + ['gold'], width=0.8)
     ax1.set_xticks(range(7))
     ax1.set_xticklabels(names + ['**LIVE**'], fontsize=11)
@@ -195,7 +177,6 @@ if st.session_state.optimized:
     ax1.legend()
     ax1.tick_params(axis='x', rotation=0)
 
-    # BOTTOM: BBB Penetration
     ax2.bar(range(7), bbb_data, color=colors + ['gold'], width=0.8)
     ax2.set_xticks(range(7))
     ax2.set_xticklabels(names + ['**LIVE**'], fontsize=11)
@@ -206,7 +187,6 @@ if st.session_state.optimized:
     ax2.legend()
     ax2.tick_params(axis='x', rotation=0)
 
-    # Value labels
     for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
         for i, height in enumerate(data):
             ax.text(i, height + 0.02, f'{height:.0%}', 
@@ -216,18 +196,16 @@ if st.session_state.optimized:
     plt.tight_layout()
     st.pyplot(fig)
 
-    # EXPORT BUTTON (Fixed)
+    # EXPORT BUTTON (Simplified)
+    st.subheader("📥 Export Results")
     export_data = {
-        'Parameter': ['Size(nm)', 'Charge', 'RMT', 'AMT', 'PEG', 'Ligand', 'Shape', 'Core', 'Total Score'],
-        'Value': [size, ('Cationic' if charge else 'Neutral'), ('Yes' if rmt else 'No'), 
-                 ('Yes' if amt else 'No'), peg, ligand, ('Rod' if shape else 'Sphere'),
-                 ['Polymer','Lipid','Metal'][core], f"{total:.0%}"],
-        'Impact': [f"{live_bbb*0.3:.0%}", f"{(0.12 if charge else -0.35):.0%}", 
-                  f"{(0.45 if rmt and amt else 0.30 if rmt else 0.22 if amt else 0.08):.0%}",
-                  '-', peg, ligand, f"{(0.06 if shape else 0):.0%}", 
-                  f"{(0.12 if core==1 else 0 if core==0 else -0.30):.0%}", '-']
+        'Parameter': ['Size (nm)', 'Charge', 'RMT', 'AMT', 'PEG Density', 'Ligand Density', 'Shape', 'Core', 'Total Score', 'BBB Score'],
+        'Optimal Value': [size, ('Cationic' if charge else 'Neutral'), ('Yes' if rmt else 'No'), 
+                         ('Yes' if amt else 'No'), f"{peg:.1f}", f"{ligand:.1f}", 
+                         ('Rod' if shape else 'Sphere'), ['Polymer','Lipid','Metal'][core], 
+                         f"{total:.0%}", f"{bbb:.0%}"]
     }
-    st.download_button("📥 Export Design Report", 
+    st.download_button("📥 Download Design Report", 
                       pd.DataFrame(export_data).to_csv(index=False), 
                       "np_optimizer_report.csv", use_container_width=True)
 
@@ -245,6 +223,7 @@ st.markdown("""
 - Lockman et al. (2004) - Cationic +12%, neutral -35%
 - Nance et al. (2014) - PEG density 2.0-3.0 optimal
 - Wang et al. (2024) - Lipid core +12%
+- Ohta et al. (2020) - Size penalty >120nm liver/spleen clearance
 """)
 
 st.markdown("### 🎯 Dual-Transcytosis References")
