@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1PyW-TBDUb7EwgFCL0BdTyzg0PdiOI_X5
 """
 # -*- coding: utf-8 -*-
-"""🧠 Glioblastoma Nanoparticle Optimizer"""
+"""🧠 Glioblastoma Nanoparticle Optimizer - FULLY FIXED"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -29,7 +29,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# LITERATURE BENCHMARKS
+# LITERATURE BENCHMARKS - FIXED WITH st.table()
 published_nps = pd.DataFrame({
     'Rank': ['#1', '#2', '#3', '#4', '#5', '#6'],
     'NP type': ['PLA-Tf', 'Cationic Dendrimer', 'PBCA-PS80', 'Liposomal Doxorubicin', 'PEGylated Liposome', 'Free Drug'],
@@ -37,24 +37,18 @@ published_nps = pd.DataFrame({
     'BBB crossing efficiency (%)': [89, 72, 68, 40, 15, 5]
 })
 st.subheader("📊 Published Data (Ranked #1-6)")
-st.dataframe(published_nps, use_container_width=True)
+st.table(published_nps)  # ← FIXED: st.table() = NO SORTING
 
-# BBB PREDICTION MODEL (with >120nm penalty)
+# BBB PREDICTION MODEL (unchanged)
 @st.cache_data
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
     size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
-    
-    # Penalty for large NPs >120nm [Ohta 2020]
     size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
     
-    if rmt and amt: 
-        transcytosis = 0.45
-    elif rmt: 
-        transcytosis = 0.30
-    elif amt: 
-        transcytosis = 0.22
-    else: 
-        transcytosis = 0.08
+    if rmt and amt: transcytosis = 0.45
+    elif rmt: transcytosis = 0.30
+    elif amt: transcytosis = 0.22
+    else: transcytosis = 0.08
     
     peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
     core_effect = 0.12 if core == 1 else (0.0 if core == 0 else -0.30)
@@ -81,15 +75,12 @@ def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffne
     
     bbb = total_boost - total_penalties
     
-    # Caps and limits
-    if not charge: 
-        bbb = min(bbb, 0.20)
-    if transcytosis == 0.08: 
-        bbb = min(bbb, 0.10)
+    if not charge: bbb = min(bbb, 0.20)
+    if transcytosis == 0.08: bbb = min(bbb, 0.10)
     
     return max(0.05, min(0.95, bbb))
 
-# FACTOR ANALYSIS FUNCTION (FIXED - all vars defined here)
+# FACTOR ANALYSIS FUNCTION (unchanged)
 def calculate_factors(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
     size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
     size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
@@ -134,7 +125,7 @@ def calculate_factors(size, charge, rmt, amt, peg, ligand, shape, core, hydro, s
 if 'optimized' not in st.session_state:
     st.session_state.optimized = False
 
-# SLIDERS
+# SLIDERS (fixed spacing)
 col1, col2 = st.columns(2)
 with col1:
     size = st.slider("📏 Size (nm)", 20, 200, 85)
@@ -159,9 +150,9 @@ with col2:
     disrupt = st.selectbox("🔊 FUS Aid", [0,1], format_func=lambda x: "Yes" if x else "No")
     magnetic = st.selectbox("🧲 Magnetic Field", [0,1], format_func=lambda x: "Yes (100nm+)" if x else "No")
 
-# WARNINGS
+# WARNINGS (fixed emojis)
 if size <= 100 and magnetic:
-    st.warning(" Magnetic guidance only effective for NPs > 100 nm")
+    st.warning("🧲 Magnetic guidance only effective for NPs > 100 nm")
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
 if size > 120:
@@ -172,7 +163,7 @@ live_bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, 
 st.subheader("📈 Live Parameter Preview")
 st.info(f"**Current BBB Score: {live_bbb:.0%}** | Adjust sliders to see real-time changes")
 
-# OPTIMIZE BUTTON WITH PROGRESS
+# OPTIMIZE BUTTON
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     progress = st.progress(0)
     for i in range(100):
@@ -181,12 +172,10 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     st.session_state.optimized = True
     st.rerun()
 
-# RESULTS SECTION
+# RESULTS SECTION - PERFECTLY INDENTED
 if st.session_state.optimized:
     bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     total = bbb * 0.82
-    
-    # Calculate factors for analysis
     factors = calculate_factors(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     
     # MAIN METRICS
@@ -198,9 +187,9 @@ if st.session_state.optimized:
     if size < 20:
         st.error("⚠️ RENAL CLEARANCE | <20nm rapid kidney elimination [Ribovski 2021]")
     if core == 2:
-        st.error("⚠️ METAL TOXICITY | Oxidative stress [Hersh 2022]")
+        st.error("☠️ METAL TOXICITY | Oxidative stress [Hersh 2022]")
     if not charge:
-        st.error(" NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
+        st.error("🚫 NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
     
     # RESULTS EVALUATION
     if total > 0.75:
@@ -216,50 +205,39 @@ if st.session_state.optimized:
 
     names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
     colors = ['green','purple','orange','red','blue','gray','gold']
-
-    # TOP: Total Score
     total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
+    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
+
     ax1.bar(range(7), total_data, color=colors, width=0.8)
-    ax1.set_xticks(range(7))
-    ax1.set_xticklabels(names, fontsize=11)
+    ax1.set_xticks(range(7)); ax1.set_xticklabels(names, fontsize=11)
     ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
     ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
-    ax1.set_ylim(0, 1.0)
-    ax1.legend()
-    ax1.tick_params(axis='x', rotation=0)
+    ax1.set_ylim(0, 1.0); ax1.legend(); ax1.tick_params(axis='x', rotation=0)
 
-    # BOTTOM: BBB Penetration
-    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
     ax2.bar(range(7), bbb_data, color=colors, width=0.8)
-    ax2.set_xticks(range(7))
-    ax2.set_xticklabels(names, fontsize=11)
+    ax2.set_xticks(range(7)); ax2.set_xticklabels(names, fontsize=11)
     ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
     ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
     ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
-    ax2.set_ylim(0, 1.0)
-    ax2.legend()
-    ax2.tick_params(axis='x', rotation=0)
+    ax2.set_ylim(0, 1.0); ax2.legend(); ax2.tick_params(axis='x', rotation=0)
 
-    # Value labels on bars
     for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
         for i, height in enumerate(data):
-            ax.text(i, height + 0.02, f'{height:.0%}', 
-                    ha='center', va='bottom', fontweight='bold', fontsize=10)
+            ax.text(i, height + 0.02, f'{height:.0%}', ha='center', va='bottom', fontweight='bold', fontsize=10)
 
     plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     st.pyplot(fig)
     
-       # FACTOR ANALYSIS
+    # FACTOR ANALYSIS - FIXED TABLE WITH st.table()
     st.subheader("🔬 Factor Analysis")
     
-    # METRICS
     col1, col2, col3 = st.columns(3)
     col1.metric("📊 Raw Factors", f"{factors['raw_sum']:.0%}", f"{bbb:.0%}")
     col2.metric("⛓️ After Caps", f"{bbb:.0%}", f"{min(95, int(factors['raw_sum']*100)):.0f}% max")
     col3.metric("⚗️ Final Score", f"{total:.0%}")
     
-    # CREATE factors_df FIRST (was missing!)
+    # FIXED TABLE - NO SORTING FOREVER
     factors_df = pd.DataFrame({
         'Factor': ['Size', 'Transcytosis', 'Charge', 'Shape', 'Hydro', 'Core', 'Mag', 'FUS',
                   'PEG', 'Ligand', 'Stiffness', 'Renal', 'Toxicity', 'Size Penalty'],
@@ -276,28 +254,10 @@ if st.session_state.optimized:
                        '>120nm RES']
     })
     
-    # CLEAN FACTORS TABLE (NO SORTING) - PROPERLY INDENTED
-    st.dataframe(
-        factors_df, 
-        use_container_width=True,
-        column_config={
-            "Factor": st.column_config.TextColumn("Factor", disabled=True),
-            "Contribution": st.column_config.TextColumn("Contribution", disabled=True),
-            "Description": st.column_config.TextColumn("Description", disabled=True)
-        }
-    )
+    st.table(factors_df)  # ← FIXED: st.table() = NO MOVING ROWS
     
     st.markdown(f"""
     **🧮 PERFECT MATH:**
-    • Raw factors = **{factors['raw_sum']:.0%}**
-    • BBB (capped 95% max) = **{bbb:.0%}**
-    • Total Score (×0.82) = **{total:.0%}**
-    """)
-
-
-    
-    st.markdown(f"""
-    ** ADJUSTMENTS:**
     • Raw factors = **{factors['raw_sum']:.0%}**
     • BBB (capped 95% max) = **{bbb:.0%}**
     • Total Score (×0.82) = **{total:.0%}**
@@ -322,10 +282,11 @@ st.markdown("""
 - Ohta et al. (2020) - Size penalty >120nm liver/spleen clearance
 """)
 
-st.markdown("###  Dual-Transcytosis References")
+st.markdown("### 🎯 Dual-Transcytosis References")
 st.markdown("""
 - Fu et al. (2018) - RMT mechanisms (30%)
 - Sun et al. (2017) - AMT pathways (22%)
 - Zheng et al. (2025) - Dual RMT+AMT synergy (45%)
 - **Combined: RMT+AMT (45%) > RMT (30%) > AMT (22%) > None (8%)**
 """)
+
