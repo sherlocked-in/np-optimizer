@@ -373,7 +373,7 @@ if not st.session_state.optimized:
     st.info(" Click OPTIMIZE or AUTO-OPTIMIZE to see detailed analysis & charts")
 
 # NAVIGATION TABS
-tab1, tab2 = st.tabs([" Methodology", References"])
+tab1, tab2 = st.tabs([" Methodology", "References"])
 
 with tab1:
     st.markdown("""
