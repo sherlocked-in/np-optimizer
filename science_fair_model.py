@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1PyW-TBDUb7EwgFCL0BdTyzg0PdiOI_X5
 """
 # -*- coding: utf-8 -*-
-"""Glioblastoma Nanoparticle Optimizer v2.3 - FIXED ERRORBAR"""
+"""Glioblastoma Nanoparticle Optimizer v2.4 - FULLY FIXED"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ st.set_page_config(page_title="NP Optimizer", layout="wide")
 plt.close('all')
 
 st.title("Glioblastoma Nanoparticle Optimizer")
-st.markdown("**Trained to reduce pharmaceutical expenses** | Prototype v2.3")
+st.markdown("**Trained to reduce pharmaceutical expenses** | Prototype v2.4 - FIXED")
 st.markdown("""
 <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; padding: 25px; border-radius: 15px; margin: 20px 0; 
@@ -58,10 +58,14 @@ def predict_bbb_uncertainty(size, charge, rmt, amt, peg, ligand, shape, core, hy
     size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
     size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
     
-    if rmt and amt: transcytosis = 0.45
-    elif rmt: transcytosis = 0.30
-    elif amt: transcytosis = 0.22
-    else: transcytosis = 0.08
+    if rmt and amt: 
+        transcytosis = 0.45
+    elif rmt: 
+        transcytosis = 0.30
+    elif amt: 
+        transcytosis = 0.22
+    else: 
+        transcytosis = 0.08
     
     peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
     core_effect = 0.12 if core == 1 else (0.0 if core == 0 else -0.30)
@@ -88,15 +92,16 @@ def predict_bbb_uncertainty(size, charge, rmt, amt, peg, ligand, shape, core, hy
     
     bbb = total_boost - total_penalties
     
-    if not charge: bbb = min(bbb, 0.20)
-    if transcytosis == 0.08: bbb = min(bbb, 0.10)
+    if not charge: 
+        bbb = min(bbb, 0.20)
+    if transcytosis == 0.08: 
+        bbb = min(bbb, 0.10)
     
     bbb = max(0.05, min(0.95, bbb))
-    
     uncertainty = 0.05
     return bbb, bbb-uncertainty, bbb+uncertainty
 
-# OPTIMIZATION FUNCTION - FIXED
+# OPTIMIZATION FUNCTION
 def objective(params):
     """Objective function for scipy.optimize"""
     size, peg, ligand, stiffness, hydro = params
@@ -136,10 +141,14 @@ def calculate_factors(size, charge, rmt, amt, peg, ligand, shape, core, hydro, s
     size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
     size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
     
-    if rmt and amt: transcytosis = 0.45
-    elif rmt: transcytosis = 0.30
-    elif amt: transcytosis = 0.22
-    else: transcytosis = 0.08
+    if rmt and amt: 
+        transcytosis = 0.45
+    elif rmt: 
+        transcytosis = 0.30
+    elif amt: 
+        transcytosis = 0.22
+    else: 
+        transcytosis = 0.08
     
     peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
     core_effect = 0.12 if core == 1 else (0.0 if core == 0 else -0.30)
@@ -205,7 +214,7 @@ st.info(f"BBB Score: {live_bbb:.0%} ±5% ({live_low:.0%}–{live_high:.0f}%) | A
 # BUTTONS
 col1, col2, col3 = st.columns(3)
 
-if col1.button("OPTIMIZE", type="primary", use_container_width=True, key="optimize"):
+if col1.button("OPTIMIZE", type="primary", use_container_width=True):
     progress_bar = st.progress(0)
     for i in range(100):
         time.sleep(0.02)
@@ -213,12 +222,13 @@ if col1.button("OPTIMIZE", type="primary", use_container_width=True, key="optimi
     st.session_state.optimized = True
     st.rerun()
 
-if col2.button("AUTO-OPTIMIZE", type="secondary", use_container_width=True, key="auto_optimize"):
+if col2.button("AUTO-OPTIMIZE", type="secondary", use_container_width=True):
     st.session_state.auto_running = True
     st.rerun()
 
 if col3.button("Methodology", type="secondary", use_container_width=True):
     st.session_state.show_methodology = True
+    st.rerun()
 
 # AUTO-OPTIMIZATION EXECUTION
 if st.session_state.get('auto_running', False):
@@ -236,7 +246,7 @@ if charge:
 if size > 120:
     st.warning("SIZE PENALTY | >120nm reduces BBB crossing [Ohta 2020]")
 
-# RESULTS SECTION
+# RESULTS SECTION - ✅ PROPERLY INDENTED
 if st.session_state.optimized:
     bbb, bbb_low, bbb_high = predict_bbb_uncertainty(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     total = bbb * 0.82
@@ -256,51 +266,48 @@ if st.session_state.optimized:
         st.error("NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
     
     if total > 0.75:
-        st.success("SYNTHESIZE NOW | Beats 5/6 published NPs!")
+        st.success("🎉 SYNTHESIZE NOW | Beats 5/6 published NPs!")
     elif total > 0.65:
-        st.success("EXCELLENT | Beats PBCA-PS80 benchmark!")
+        st.success("✅ EXCELLENT | Beats PBCA-PS80 benchmark!")
     else:
-        st.warning("PROMISING | Fine-tune parameters")
-
-    # FIXED BENCHMARK CHART - FULL CORRECTION
-st.subheader("Live Design vs Published Benchmarks")
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), sharex=True)
-
-names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
-colors = ['green','purple','orange','red','blue','gray','gold']
-total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
-bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
-
-# Total Score Chart
-bars1 = ax1.bar(range(7), total_data, color=colors, width=0.7, alpha=0.8)
-x_pos = np.array([6])  # Explicit x position as array
-err_total_low = np.array([total - total_low])
-err_total_high = np.array([total_high - total])
-ax1.errorbar(x_pos, [total], yerr=[err_total_low, err_total_high], fmt='o', 
-             color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
-ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, linewidth=2, label='PBCA Benchmark')
-ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
-ax1.set_ylim(0, 1.05)
-ax1.legend(loc='upper left')
-ax1.grid(True, alpha=0.3)
-
-# BBB Chart  
-bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.7, alpha=0.8)
-err_bbb_low = np.array([bbb - bbb_low])
-err_bbb_high = np.array([bbb_high - bbb])
-ax2.errorbar(x_pos, [bbb], yerr=[err_bbb_low, err_bbb_high], fmt='o', 
-             color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
-ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, linewidth=2, label='Industry Target')
-ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
-ax2.set_xlabel('Nanoparticle Designs', fontweight='bold', fontsize=12)
-ax2.set_ylim(0, 1.05)
-ax2.legend(loc='upper left')
-ax2.grid(True, alpha=0.3)
-
-# Rest of your chart code remains the same...
-
+        st.warning("🔧 PROMISING | Fine-tune parameters")
     
-    # Set x-ticks
+    # FIXED BENCHMARK CHART - ✅ PROPERLY INDENTED & ERRORBAR FIXED
+    st.subheader("Live Design vs Published Benchmarks")
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), sharex=True)
+    
+    names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
+    colors = ['green','purple','orange','red','blue','gray','gold']
+    total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
+    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
+    
+    # Total Score Chart
+    bars1 = ax1.bar(range(7), total_data, color=colors, width=0.7, alpha=0.8)
+    x_pos = np.array([6])  # Explicit x position
+    err_total_low = np.array([total - total_low])
+    err_total_high = np.array([total_high - total])
+    ax1.errorbar(x_pos, np.array([total]), yerr=[err_total_low, err_total_high], fmt='o', 
+                color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
+    ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, linewidth=2, label='PBCA Benchmark')
+    ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
+    ax1.set_ylim(0, 1.05)
+    ax1.legend(loc='upper left')
+    ax1.grid(True, alpha=0.3)
+    
+    # BBB Chart  
+    bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.7, alpha=0.8)
+    err_bbb_low = np.array([bbb - bbb_low])
+    err_bbb_high = np.array([bbb_high - bbb])
+    ax2.errorbar(x_pos, np.array([bbb]), yerr=[err_bbb_low, err_bbb_high], fmt='o', 
+                color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
+    ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, linewidth=2, label='Industry Target')
+    ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
+    ax2.set_xlabel('Nanoparticle Designs', fontweight='bold', fontsize=12)
+    ax2.set_ylim(0, 1.05)
+    ax2.legend(loc='upper left')
+    ax2.grid(True, alpha=0.3)
+    
+    # Set x-ticks - ✅ PROPERLY INDENTED
     for ax in [ax1, ax2]:
         ax.set_xticks(range(7))
         ax.set_xticklabels(names, fontsize=11)
@@ -344,7 +351,7 @@ ax2.grid(True, alpha=0.3)
 if st.session_state.get('best_params'):
     st.subheader("Auto-Optimized Parameters")
     best = st.session_state.best_params
-    st.success(f"Optimal Settings: Size={best['size']:.1f}nm, PEG={best['peg']:.1f}, Ligand={best['ligand']:.1f}, "
+    st.success(f"🎯 Optimal Settings: Size={best['size']:.1f}nm, PEG={best['peg']:.1f}, Ligand={best['ligand']:.1f}, "
               f"Stiffness={best['stiffness']:.0f}kPa, Hydro={best['hydro']:.1f}")
     
     opt_bbb, _, _ = predict_bbb_uncertainty(best['size'], 1, 1, 1, best['peg'], best['ligand'], 1, 1, best['hydro'], best['stiffness'], 1, 1)
@@ -353,7 +360,7 @@ if st.session_state.get('best_params'):
 # EXPORT
 if st.session_state.optimized or st.session_state.get('best_params'):
     st.subheader("Export Results")
-    if st.button("Download CSV Results", key="csv_export"):
+    if st.button("📊 Download CSV Results"):
         bbb, bbb_low, bbb_high = predict_bbb_uncertainty(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
         total = bbb * 0.82
         total_low = bbb_low * 0.82
@@ -377,10 +384,10 @@ if st.session_state.optimized or st.session_state.get('best_params'):
         )
 
 if not st.session_state.optimized:
-    st.info("Click OPTIMIZE or AUTO-OPTIMIZE to see detailed analysis & charts")
+    st.info("👆 Click OPTIMIZE or AUTO-OPTIMIZE to see detailed analysis & charts")
 
 # EXPANDERS
-with st.expander("Methodology"):
+with st.expander("📋 Methodology"):
     st.markdown("""
     **BBB Score = ΣBoosts - ΣPenalties (capped 5-95%)**
     
@@ -400,7 +407,7 @@ with st.expander("Methodology"):
     **Uncertainty: ±5%** Monte Carlo from literature variance
     """)
 
-with st.expander("References"):
+with st.expander("📚 References"):
     st.markdown("""
     **Primary Sources [APA 7th]**
     - Asimakidou et al. (2024) - Hydrophobicity LogP=3.0 optimal
@@ -416,4 +423,4 @@ with st.expander("References"):
     """)
 
 st.markdown("---")
-st.markdown("*Prototype v2.3 | FIXED errorbar shape mismatch*")
+st.markdown("*Prototype v2.4 | ✅ FIXED: Indentation + Errorbar Shape Mismatch*")
