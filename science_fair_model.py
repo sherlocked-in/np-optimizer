@@ -8,8 +8,7 @@ Original file is located at
 """
 # -*- coding: utf-8 -*-
 """
-Glioblastoma Nanoparticle Optimizer v2.5
-Clean version with complete references table
+Glioblastoma Nanoparticle Optimizer
 """
 
 import streamlit as st
@@ -24,7 +23,7 @@ st.set_page_config(page_title="NP Optimizer", layout="wide")
 plt.close('all')
 
 st.title("Glioblastoma Nanoparticle Optimizer")
-st.markdown("Trained to reduce pharmaceutical expenses | Prototype v2.5")
+st.markdown("Trained to reduce pharmaceutical expenses | Prototype")
 
 # Initialize session state
 if 'optimized' not in st.session_state:
@@ -140,7 +139,7 @@ def create_benchmark_chart(bbb, total, bbb_low, bbb_high, total_low, total_high)
     """Create benchmark comparison chart - clean bars only"""
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
     
-    names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
+    names = ['PLA-Tf', 'Cationic', 'PBCA-PS80', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
     colors = ['#2E8B57','#9370DB','#FF8C00','#DC143C','#4169E1','#808080','#FFD700']
     total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
     bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
@@ -311,4 +310,4 @@ references_df = pd.DataFrame({
 st.table(references_df)
 
 st.markdown("---")
-st.markdown("Prototype v2.5 | Complete references table included")
+st.markdown("Prototype | Complete references table included")
