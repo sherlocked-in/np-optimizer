@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1PyW-TBDUb7EwgFCL0BdTyzg0PdiOI_X5
 """
 # -*- coding: utf-8 -*-
-"""🧠 Glioblastoma Nanoparticle Optimizer - NO TOP 3"""
+"""🧠 Glioblastoma Nanoparticle Optimizer"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -47,6 +47,53 @@ def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffne
     # Penalty for large NPs >120nm [Ohta 2020]
     size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
     
+    if rmt and amt: 
+        transcytosis = 0.45
+    elif rmt: 
+        transcytosis = 0.30
+    elif amt: 
+        transcytosis = 0.22
+    else: 
+        transcytosis = 0.08
+    
+    peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
+    core_effect = 0.12 if core == 1 else (0.0 if core == 0 else -0.30)
+    fus_boost = 0.12 if disrupt and size >= 50 else 0.06 if disrupt else 0
+    mag_boost = 0.15 if magnetic and size >= 100 else 0
+    
+    if charge:
+        charge_boost = 0.12
+        tox_penalty = 0.10
+    else:
+        charge_boost = -0.35
+        tox_penalty = 0
+    
+    ligand_penalty = abs(ligand-3.0)/5 * 0.08
+    shape_boost = 0.06 if shape else 0
+    hydro_boost = 0.08 * (1 - abs(hydro-3.0)/2)
+    stiff_penalty = abs(stiffness-25)/50 * 0.06
+    renal_penalty = 0.20 if size < 20 else 0
+    
+    total_boost = (size_factor + transcytosis + charge_boost + shape_boost + hydro_boost + 
+                   core_effect + mag_boost + fus_boost)
+    total_penalties = (peg_penalty + ligand_penalty + stiff_penalty + renal_penalty + 
+                      tox_penalty + size_penalty)
+    
+    bbb = total_boost - total_penalties
+    
+    # Caps and limits
+    if not charge: 
+        bbb = min(bbb, 0.20)
+    if transcytosis == 0.08: 
+        bbb = min(bbb, 0.10)
+    
+    return max(0.05, min(0.95, bbb))
+
+# FACTOR ANALYSIS FUNCTION (FIXED - all vars defined here)
+def calculate_factors(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
+    size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
+    size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
+    
     if rmt and amt: transcytosis = 0.45
     elif rmt: transcytosis = 0.30
     elif amt: transcytosis = 0.22
@@ -69,14 +116,19 @@ def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffne
     hydro_boost = 0.08 * (1 - abs(hydro-3.0)/2)
     stiff_penalty = abs(stiffness-25)/50 * 0.06
     renal_penalty = 0.20 if size < 20 else 0
-    total_boost = size_factor + transcytosis + charge_boost + shape_boost + hydro_boost + core_effect + mag_boost + fus_boost
-    total_penalties = peg_penalty + ligand_penalty + stiff_penalty + renal_penalty + tox_penalty + size_penalty
-    bbb = ( total_boost - total_penalties )
     
-    if not charge: bbb = min(bbb, 0.20)
-    if transcytosis == 0.08: bbb = min(bbb, 0.10)
+    raw_sum = (size_factor + transcytosis + charge_boost + shape_boost + hydro_boost + 
+              core_effect + mag_boost + fus_boost - peg_penalty - ligand_penalty - 
+              stiff_penalty - renal_penalty - tox_penalty - size_penalty)
     
-    return max(0.05, min(0.95, bbb))
+    return {
+        'size_factor': size_factor, 'transcytosis': transcytosis, 'charge_boost': charge_boost,
+        'shape_boost': shape_boost, 'hydro_boost': hydro_boost, 'core_effect': core_effect,
+        'mag_boost': mag_boost, 'fus_boost': fus_boost, 'peg_penalty': peg_penalty,
+        'ligand_penalty': ligand_penalty, 'stiff_penalty': stiff_penalty,
+        'renal_penalty': renal_penalty, 'tox_penalty': tox_penalty, 'size_penalty': size_penalty,
+        'raw_sum': raw_sum
+    }
 
 # Initialize session state
 if 'optimized' not in st.session_state:
@@ -109,7 +161,7 @@ with col2:
 
 # WARNINGS
 if size <= 100 and magnetic:
-    st.warning("🧲 Magnetic guidance only effective for NPs > 100 nm")
+    st.warning(" Magnetic guidance only effective for NPs > 100 nm")
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
 if size > 120:
@@ -129,10 +181,13 @@ if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     st.session_state.optimized = True
     st.rerun()
 
-# RESULTS SECTION (Top 3 REMOVED)
+# RESULTS SECTION
 if st.session_state.optimized:
     bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     total = bbb * 0.82
+    
+    # Calculate factors for analysis
+    factors = calculate_factors(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     
     # MAIN METRICS
     col1, col2 = st.columns(2)
@@ -143,9 +198,9 @@ if st.session_state.optimized:
     if size < 20:
         st.error("⚠️ RENAL CLEARANCE | <20nm rapid kidney elimination [Ribovski 2021]")
     if core == 2:
-        st.error("☠️ METAL TOXICITY | Oxidative stress [Hersh 2022]")
+        st.error("⚠️ METAL TOXICITY | Oxidative stress [Hersh 2022]")
     if not charge:
-        st.error("🚫 NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
+        st.error(" NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
     
     # RESULTS EVALUATION
     if total > 0.75:
@@ -154,31 +209,30 @@ if st.session_state.optimized:
         st.success("✅ **EXCELLENT** | Beats PBCA-PS80 benchmark!")
     else:
         st.warning("🟡 **PROMISING** | Fine-tune parameters")
-
-# BENCHMARK CHART (ORIGINAL - RESTORED)
-if st.session_state.optimized:
+    
+    # BENCHMARK CHART
     st.subheader("📊 Live Design vs Published Benchmarks")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
 
-    names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug']
-    colors = ['green','purple','orange','red','blue','gray']
+    names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
+    colors = ['green','purple','orange','red','blue','gray','gold']
 
-    # TOP: Total Score - EXACTLY 7 BARS
+    # TOP: Total Score
     total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
-    ax1.bar(range(7), total_data, color=colors + ['gold'], width=0.8)
+    ax1.bar(range(7), total_data, color=colors, width=0.8)
     ax1.set_xticks(range(7))
-    ax1.set_xticklabels(names + ['**LIVE**'], fontsize=11)
+    ax1.set_xticklabels(names, fontsize=11)
     ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
     ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
     ax1.set_ylim(0, 1.0)
     ax1.legend()
     ax1.tick_params(axis='x', rotation=0)
 
-    # BOTTOM: BBB Penetration - EXACTLY 7 BARS
+    # BOTTOM: BBB Penetration
     bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
-    ax2.bar(range(7), bbb_data, color=colors + ['gold'], width=0.8)
+    ax2.bar(range(7), bbb_data, color=colors, width=0.8)
     ax2.set_xticks(range(7))
-    ax2.set_xticklabels(names + ['**LIVE**'], fontsize=11)
+    ax2.set_xticklabels(names, fontsize=11)
     ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
     ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
     ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
@@ -193,46 +247,29 @@ if st.session_state.optimized:
                     ha='center', va='bottom', fontweight='bold', fontsize=10)
 
     plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     st.pyplot(fig)
-
-    # FACTOR ANALYSIS (FULLY FIXED)
-st.subheader("🔬 Factor Analysis")
-if st.session_state.optimized:
-    # All factor calculations (unchanged)
-    size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
-    # ... [all other factors same as before] ...
     
-    raw_sum = (size_factor + transcytosis + charge_boost + shape_boost + hydro_boost + 
-              core_effect + mag_boost + fus_boost - peg_penalty - ligand_penalty - 
-              stiff_penalty - renal_penalty - tox_penalty - size_penalty)
+    # FACTOR ANALYSIS
+    st.subheader(" Factor Analysis")
     
-    # FIXED METRICS - Pure numbers only
+    # METRICS
     col1, col2, col3 = st.columns(3)
-    col1.metric("📊 Raw Factors", f"{raw_sum:.0%}", f"{bbb:.0%}")
-    col2.metric("⛓️ After Caps", f"{bbb:.0%}", f"{min(95, int(raw_sum*100)):.0f}% max")
-    col3.metric("⚗️ Final Score", f"{total:.0%}")
+    col1.metric(" Raw Factors", f"{factors['raw_sum']:.0%}", f"{bbb:.0%}")
+    col2.metric(" After Caps", f"{bbb:.0%}", f"{min(95, int(factors['raw_sum']*100)):.0f}% max")
+    col3.metric(" Final Score", f"{total:.0%}")
     
-    st.markdown(f"""
-    **🧮 PERFECT MATH:**
-    • Raw factors = **{raw_sum:.0%}**
-    • BBB (capped 95% max) = **{bbb:.0%}**
-    • Total Score (×0.82) = **{total:.0%}**
-    """)
-    
-    # Clean 14-row table (unchanged)
-    st.dataframe(factors_df, use_container_width=True)
-
-    
-    # CLEAN FACTORS TABLE (just the 14 parameters)
+    # CLEAN FACTORS TABLE
     factors_df = pd.DataFrame({
         'Factor': ['Size', 'Transcytosis', 'Charge', 'Shape', 'Hydro', 'Core', 'Mag', 'FUS',
                   'PEG', 'Ligand', 'Stiffness', 'Renal', 'Toxicity', 'Size Penalty'],
-        'Contribution': [f"{size_factor:+.0%}", f"{transcytosis:+.0%}", f"{charge_boost:+.0%}", 
-                       f"{shape_boost:+.0%}", f"{hydro_boost:+.0%}", f"{core_effect:+.0%}", 
-                       f"{mag_boost:+.0%}", f"{fus_boost:+.0%}", f"{-peg_penalty:.0%}", 
-                       f"{-ligand_penalty:.0%}", f"{-stiff_penalty:.0%}", f"{-renal_penalty:.0%}",
-                       f"{-tox_penalty:.0%}", f"{-size_penalty:.0%}"],
+        'Contribution': [f"{factors['size_factor']:+.0%}", f"{factors['transcytosis']:+.0%}", 
+                        f"{factors['charge_boost']:+.0%}", f"{factors['shape_boost']:+.0%}", 
+                        f"{factors['hydro_boost']:+.0%}", f"{factors['core_effect']:+.0%}", 
+                        f"{factors['mag_boost']:+.0%}", f"{factors['fus_boost']:+.0%}", 
+                        f"{-factors['peg_penalty']:.0%}", f"{-factors['ligand_penalty']:.0%}", 
+                        f"{-factors['stiff_penalty']:.0%}", f"{-factors['renal_penalty']:.0%}",
+                        f"{-factors['tox_penalty']:.0%}", f"{-factors['size_penalty']:.0%}"],
         'Description': ['Optimal 75nm', 'RMT+AMT', 'Cationic boost', 'Rod shape', 'LogP=3.0',
                        'Lipid vs Metal', '>100nm needed', 'TJ opening', '2-3kDa optimal',
                        '3.0/nm² optimal', '25kPa optimal', '<20nm clearance', 'Neural tox',
@@ -240,21 +277,15 @@ if st.session_state.optimized:
     })
     st.dataframe(factors_df, use_container_width=True)
     
-    # SUMMARY EQUATION
     st.markdown(f"""
-    **🧮 Math Breakdown:**
-    ```
-    Raw Sum = {raw_sum:.0%} 
-    ↓ Caps (95% max, charge/transcytosis limits)
-    BBB = {bbb:.0%}
-    ↓ Therapeutic index adjustment (×0.82)
-    TOTAL SCORE = {total:.0%}
-    ```
+    ** ADJUSTMENTS:**
+    • Raw factors = **{factors['raw_sum']:.0%}**
+    • BBB (capped 95% max) = **{bbb:.0%}**
+    • Total Score (×0.82) = **{total:.0%}**
     """)
 else:
-    st.info("👆 Click OPTIMIZE to see detailed factor analysis")
+    st.info("👆 Click OPTIMIZE to see detailed analysis & charts")
 
-   
 st.markdown("---")
 
 # REFERENCES
@@ -272,7 +303,7 @@ st.markdown("""
 - Ohta et al. (2020) - Size penalty >120nm liver/spleen clearance
 """)
 
-st.markdown("### 🎯 Dual-Transcytosis References")
+st.markdown("###  Dual-Transcytosis References")
 st.markdown("""
 - Fu et al. (2018) - RMT mechanisms (30%)
 - Sun et al. (2017) - AMT pathways (22%)
