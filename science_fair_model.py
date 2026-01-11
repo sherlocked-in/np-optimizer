@@ -45,6 +45,9 @@ st.dataframe(published_nps, use_container_width=True)
 def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic):
     size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
     
+    # 👇 NEW: Penalty for large NPs >120nm [Ohta 2020, size-dependent clearance]
+    size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
+    
     if rmt and amt: transcytosis = 0.45
     elif rmt: transcytosis = 0.30
     elif amt: transcytosis = 0.22
@@ -70,7 +73,7 @@ def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffne
     
     bbb = (size_factor + transcytosis + charge_boost + shape_boost + 
            hydro_boost + core_effect + mag_boost + fus_boost -
-           peg_penalty - ligand_penalty - stiff_penalty - renal_penalty - tox_penalty)
+           peg_penalty - ligand_penalty - stiff_penalty - renal_penalty - tox_penalty - size_penalty)
     
     if not charge: bbb = min(bbb, 0.20)
     if transcytosis == 0.08: bbb = min(bbb, 0.10)
@@ -111,6 +114,10 @@ if size <= 100 and magnetic:
 
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
+
+if size > 120:
+    st.warning("⚠️ **SIZE PENALTY** | >120nm reduces BBB crossing due to liver/spleen clearance [Ohta 2020]")
+
 
 # LIVE PREVIEW (Fixed sensitivity plot)
 live_bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
