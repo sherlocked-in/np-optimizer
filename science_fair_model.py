@@ -339,7 +339,7 @@ if st.session_state.optimized or st.session_state.get('best_params'):
     
     # PDF Export
     with col2:
-        if st.button("📑 Download PDF Report"):
+        if st.button(" Download PDF Report"):
             buffer = io.BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter)
             styles = getSampleStyleSheet()
@@ -373,7 +373,7 @@ if not st.session_state.optimized:
     st.info(" Click OPTIMIZE or AUTO-OPTIMIZE to see detailed analysis & charts")
 
 # NAVIGATION TABS
-tab1, tab2 = st.tabs([" Methodology", 📖 References"])
+tab1, tab2 = st.tabs([" Methodology", References"])
 
 with tab1:
     st.markdown("""
