@@ -20,7 +20,6 @@ plt.close('all')
 
 st.title("🧠 Glioblastoma Nanoparticle Optimizer")
 st.markdown("**Trained to reduce pharmaceutical expenses** | Prototype")
-
 st.markdown("""
 <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; padding: 25px; border-radius: 15px; margin: 20px 0; 
@@ -70,10 +69,9 @@ def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffne
     hydro_boost = 0.08 * (1 - abs(hydro-3.0)/2)
     stiff_penalty = abs(stiffness-25)/50 * 0.06
     renal_penalty = 0.20 if size < 20 else 0
-    
-    bbb = (size_factor + transcytosis + charge_boost + shape_boost + 
-           hydro_boost + core_effect + mag_boost + fus_boost -
-           peg_penalty - ligand_penalty - stiff_penalty - renal_penalty - tox_penalty - size_penalty)
+    total_boost = size_factor + transcytosis + charge_boost + shape_boost + hydro_boost + core_effect + mag_boost + fus_boost
+    total_penalties = peg_penalty + ligand_penalty + stiff_penalty + renal_penalty + tox_penalty + size_penalty
+    bbb = ( total_boost - total_penalties )
     
     if not charge: bbb = min(bbb, 0.20)
     if transcytosis == 0.08: bbb = min(bbb, 0.10)
