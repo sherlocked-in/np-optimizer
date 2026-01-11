@@ -196,10 +196,11 @@ if st.session_state.optimized:
     plt.tight_layout()
     st.pyplot(fig)
 
-  # FACTOR BREAKDOWN TABLE (FULLY WORKING)
-st.subheader("🔬 Detailed Factor Contributions")
+# FACTOR EXPLANATION (Separate metrics + clean table)
+st.subheader("🔬 Factor Analysis")
+
 if st.session_state.optimized:
-    # Calculate ALL factors using exact predict_bbb math
+    # Calculate ALL factors (same as previous fix)
     size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
     size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
     transcytosis = 0.45 if rmt and amt else (0.30 if rmt else (0.22 if amt else 0.08))
@@ -215,30 +216,48 @@ if st.session_state.optimized:
     stiff_penalty = abs(stiffness-25)/50 * 0.06
     renal_penalty = 0.20 if size < 20 else 0
     
-    # RAW SUM (before caps) vs FINAL (after caps)
+    # RAW vs FINAL calculation
     raw_sum = (size_factor + transcytosis + charge_boost + shape_boost + hydro_boost + 
               core_effect + mag_boost + fus_boost - peg_penalty - ligand_penalty - 
               stiff_penalty - renal_penalty - tox_penalty - size_penalty)
     
+    # SEPARATE EXPLANATION METRICS (ABOVE TABLE)
+    col1, col2, col3 = st.columns(3)
+    col1.metric(" Raw Factor Sum", f"{raw_sum:.0%}", f"→ {bbb:.0%}")
+    col2.metric(" Caps Applied", f"{bbb/raw_sum*100:.0%} of raw" if raw_sum > 0 else "0%")
+    col3.metric(" Final Total", f"{total:.0%}", "(BBB × 0.82)")
+    
+    st.markdown("** Raw factors sum to 97% → Caps limit to 95% BBB → ×0.82 = 78% Total**")
+    
+    # CLEAN FACTORS TABLE (just the 14 parameters)
     factors_df = pd.DataFrame({
         'Factor': ['Size', 'Transcytosis', 'Charge', 'Shape', 'Hydro', 'Core', 'Mag', 'FUS',
-                  'PEG', 'Ligand', 'Stiff', 'Renal', 'Tox', 'Size Penalty', 
-                  '--- RAW TOTAL ---', 'Final BBB', 'Total Score'],
+                  'PEG', 'Ligand', 'Stiffness', 'Renal', 'Toxicity', 'Size Penalty'],
         'Contribution': [f"{size_factor:+.0%}", f"{transcytosis:+.0%}", f"{charge_boost:+.0%}", 
                        f"{shape_boost:+.0%}", f"{hydro_boost:+.0%}", f"{core_effect:+.0%}", 
                        f"{mag_boost:+.0%}", f"{fus_boost:+.0%}", f"{-peg_penalty:.0%}", 
                        f"{-ligand_penalty:.0%}", f"{-stiff_penalty:.0%}", f"{-renal_penalty:.0%}",
-                       f"{-tox_penalty:.0%}", f"{-size_penalty:.0%}", 
-                       f"{raw_sum:.0%}", f"{bbb:.0%}", f"{total:.0%}"],
+                       f"{-tox_penalty:.0%}", f"{-size_penalty:.0%}"],
         'Description': ['Optimal 75nm', 'RMT+AMT', 'Cationic boost', 'Rod shape', 'LogP=3.0',
                        'Lipid vs Metal', '>100nm needed', 'TJ opening', '2-3kDa optimal',
                        '3.0/nm² optimal', '25kPa optimal', '<20nm clearance', 'Neural tox',
-                       '>120nm RES', 'Before caps applied', 'After caps', 'BBB×0.82']
+                       '>120nm RES']
     })
     st.dataframe(factors_df, use_container_width=True)
+    
+    # SUMMARY EQUATION
+    st.markdown(f"""
+    **🧮 Math Breakdown:**
+    ```
+    Raw Sum = {raw_sum:.0%} 
+    ↓ Caps (95% max, charge/transcytosis limits)
+    BBB = {bbb:.0%}
+    ↓ Therapeutic index adjustment (×0.82)
+    TOTAL SCORE = {total:.0%}
+    ```
+    """)
 else:
-    st.info("👆 Click OPTIMIZE to see detailed factor breakdown")
-  
+    st.info("👆 Click OPTIMIZE to see detailed factor analysis")
 
    
 st.markdown("---")
