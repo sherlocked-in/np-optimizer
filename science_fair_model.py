@@ -221,13 +221,14 @@ if st.session_state.optimized:
               core_effect + mag_boost + fus_boost - peg_penalty - ligand_penalty - 
               stiff_penalty - renal_penalty - tox_penalty - size_penalty)
     
-    # SEPARATE EXPLANATION METRICS (ABOVE TABLE)
-    col1, col2, col3 = st.columns(3)
-    col1.metric(" Raw Factor Sum", f"{raw_sum:.0%}", f"→ {bbb:.0%}")
-    col2.metric(" Caps Applied", f"{bbb/raw_sum*100:.0%} of raw" if raw_sum > 0 else "0%")
-    col3.metric(" Final Total", f"{total:.0%}", "(BBB × 0.82)")
-    
-    st.markdown("** Raw factors sum to 97% → Caps limit to 95% BBB → ×0.82 = 78% Total**")
+   # FIXED SEPARATE EXPLANATION METRICS
+col1, col2, col3 = st.columns(3)
+col1.metric(" Raw Factor Sum", f"{raw_sum:.0%}", f"{bbb:.0%}")
+col2.metric("Cap Reduction", f"{min(95, raw_sum*100):.0f}%", f"{bbb:.0%}")
+col3.metric(" Final Total", f"{total:.0%}", "(BBB × 0.82)")
+
+st.markdown(f"**💡 {raw_sum:.0%} raw → **{bbb:.0%}** BBB (capped) → **{total:.0%}** Total**")
+
     
     # CLEAN FACTORS TABLE (just the 14 parameters)
     factors_df = pd.DataFrame({
