@@ -13,10 +13,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt 
 import math
+import time
 
 st.set_page_config(page_title="🧠 NP Optimizer", layout="wide")
-
-# Clear matplotlib state
 plt.close('all')
 
 st.title("🧠 Glioblastoma Nanoparticle Optimizer")
@@ -78,6 +77,10 @@ def predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffne
     
     return max(0.05, min(0.95, bbb))
 
+# Initialize session state
+if 'optimized' not in st.session_state:
+    st.session_state.optimized = False
+
 # SLIDERS
 col1, col2 = st.columns(2)
 with col1:
@@ -109,48 +112,41 @@ if size <= 100 and magnetic:
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
 
-# Add after sliders, before Optimize button
-st.subheader("📈 Parameter Sensitivity")
-fig, ax = plt.subplots(figsize=(12,8))
-sensitivity_data = {
-    'Size': size_factor, 'Charge': charge_boost, 'RMT/AMT': transcytosis,
-    'PEG': -peg_penalty, 'Core': core_effect, 'FUS': fus_boost
-}
-pd.Series(sensitivity_data).plot(kind='barh', ax=ax)
-st.pyplot(fig)
+# LIVE PREVIEW (Fixed sensitivity plot)
+live_bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
+st.subheader("📈 Live Parameter Preview")
+st.info(f"**Current BBB Score: {live_bbb:.0%}** | Adjust sliders to see real-time changes")
 
-# OPTIMIZE BUTTON - FIXED RERUN
+# OPTIMIZE BUTTON WITH PROGRESS
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
+    progress = st.progress(0)
+    for i in range(100):
+        time.sleep(0.01)
+        progress.progress(i + 1)
     st.session_state.optimized = True
-    st.rerun()  # ✅ FIXED: experimental_rerun() → rerun()
+    st.rerun()
 
-if st.session_state.optimized:
-    # 👇 INSERT HERE - TOP 3
-    def get_top_configs():
-        best = []
-        for s in [75, 85, 95]:
-            for c in [1,0]:
-                score = predict_bbb(s, c, 1, 0, 2.5, 3.0, 1, 1, 3.0, 25, 1, 1)
-                best.append({'size':s, 'charge':c, 'score':score*0.82})
-        return sorted(best, key=lambda x: x['score'], reverse=True)[:3]
-    
-    top3 = get_top_configs()
-    st.subheader("🎯 Top 3 Recommended Designs")
-    for i, config in enumerate(top3):
-        st.metric(f"#{i+1}", f"{config['score']:.0%}", f"Size: {config['size']}nm")
-    
-    # Your existing metrics code continues...
-    col1.metric("🎯 Total Score", f"{total:.0%}")
-
-
-# RESULTS ONLY SHOW AFTER OPTIMIZE
-if 'optimized' not in st.session_state:
-    st.session_state.optimized = False
-
+# RESULTS SECTION (Fixed structure)
 if st.session_state.optimized:
     bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
     total = bbb * 0.82
     
+    # TOP 3 RECOMMENDATIONS (Fixed)
+    def get_top_configs():
+        best = []
+        for s in [75, 85, 95]:
+            score = predict_bbb(s, 1, 1, 0, 2.5, 3.0, 1, 1, 3.0, 25, 1, 0)
+            best.append({'size':s, 'score':score*0.82})
+        return sorted(best, key=lambda x: x['score'], reverse=True)[:3]
+    
+    top3 = get_top_configs()
+    st.subheader("🎯 Top 3 Recommended Designs")
+    col1, col2, col3 = st.columns(3)
+    for i, config in enumerate(top3):
+        with eval(f"col{i+1}"):
+            st.metric(f"#{i+1}", f"{config['score']:.0%}", f"Size: {config['size']}nm")
+    
+    # MAIN METRICS
     col1, col2 = st.columns(2)
     col1.metric("🎯 Total Score", f"{total:.0%}")
     col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
@@ -163,71 +159,74 @@ if st.session_state.optimized:
     if not charge:
         st.error("🚫 NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
     
-    # RESULTS
+    # RESULTS EVALUATION
     if total > 0.75:
         st.success("🚀 **SYNTHESIZE NOW** | Beats 5/6 published NPs! 🥇")
     elif total > 0.65:
         st.success("✅ **EXCELLENT** | Beats PBCA-PS80 benchmark!")
     else:
         st.warning("🟡 **PROMISING** | Fine-tune parameters")
-    
-   # SINGLE CHART - PERFECT SPACING, NO OVERLAP
-st.subheader("📊 Live Design vs Published Benchmarks")
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
 
-names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug']  # ✅ SHORT NAMES
-colors = ['green','purple','orange','red','blue','gray']
-
-# TOP: Total Score - EXACTLY 7 BARS
-total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
-ax1.bar(range(7), total_data, color=colors + ['gold'], width=0.8)
-ax1.set_xticks(range(7))
-ax1.set_xticklabels(names + ['**LIVE**\n{:.0%}'.format(total)], fontsize=11)
-ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
-ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
-ax1.set_ylim(0, 1.0)
-ax1.legend()
-ax1.tick_params(axis='x', rotation=0)  # ✅ NO ROTATION
-
-# BOTTOM: BBB Penetration - EXACTLY 7 BARS
-bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
-ax2.bar(range(7), bbb_data, color=colors + ['gold'], width=0.8)
-ax2.set_xticks(range(7))
-ax2.set_xticklabels(names + ['**LIVE**\n{:.0%}'.format(bbb)], fontsize=11)
-ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
-ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
-ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
-ax2.set_ylim(0, 1.0)
-ax2.legend()
-ax2.tick_params(axis='x', rotation=0)
-
-# Value labels on bars
-for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
-    for i, height in enumerate(data):
-        ax.text(i, height + 0.02, f'{height:.0%}', 
-                ha='center', va='bottom', fontweight='bold', fontsize=10)
-
-plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
-plt.tight_layout()
-st.pyplot(fig)
-
-st.markdown("---")
-
-st.pyplot(fig)
-
-# 👇 INSERT HERE - EXPORT
+# BENCHMARK CHART (Moved inside optimized block to avoid errors)
 if st.session_state.optimized:
+    st.subheader("📊 Live Design vs Published Benchmarks")
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
+
+    names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug']
+    colors = ['green','purple','orange','red','blue','gray']
+
+    total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
+    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
+
+    # TOP: Total Score
+    ax1.bar(range(7), total_data, color=colors + ['gold'], width=0.8)
+    ax1.set_xticks(range(7))
+    ax1.set_xticklabels(names + ['**LIVE**'], fontsize=11)
+    ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
+    ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
+    ax1.set_ylim(0, 1.0)
+    ax1.legend()
+    ax1.tick_params(axis='x', rotation=0)
+
+    # BOTTOM: BBB Penetration
+    ax2.bar(range(7), bbb_data, color=colors + ['gold'], width=0.8)
+    ax2.set_xticks(range(7))
+    ax2.set_xticklabels(names + ['**LIVE**'], fontsize=11)
+    ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
+    ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
+    ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
+    ax2.set_ylim(0, 1.0)
+    ax2.legend()
+    ax2.tick_params(axis='x', rotation=0)
+
+    # Value labels
+    for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
+        for i, height in enumerate(data):
+            ax.text(i, height + 0.02, f'{height:.0%}', 
+                    ha='center', va='bottom', fontweight='bold', fontsize=10)
+
+    plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
+    plt.tight_layout()
+    st.pyplot(fig)
+
+    # EXPORT BUTTON (Fixed)
     export_data = {
-        'Parameter': ['Size', 'Charge', 'RMT', 'AMT', 'PEG', 'Ligand', 'Score'],
-        'Value': [size, 'Cationic' if charge else 'Neutral', rmt, amt, peg, ligand, f"{total:.0%}"],
-        'Impact': [f"{size_factor:.0%}", f"{charge_boost+tox_penalty:.0%}", f"{transcytosis:.0%}", ...]
+        'Parameter': ['Size(nm)', 'Charge', 'RMT', 'AMT', 'PEG', 'Ligand', 'Shape', 'Core', 'Total Score'],
+        'Value': [size, ('Cationic' if charge else 'Neutral'), ('Yes' if rmt else 'No'), 
+                 ('Yes' if amt else 'No'), peg, ligand, ('Rod' if shape else 'Sphere'),
+                 ['Polymer','Lipid','Metal'][core], f"{total:.0%}"],
+        'Impact': [f"{live_bbb*0.3:.0%}", f"{(0.12 if charge else -0.35):.0%}", 
+                  f"{(0.45 if rmt and amt else 0.30 if rmt else 0.22 if amt else 0.08):.0%}",
+                  '-', peg, ligand, f"{(0.06 if shape else 0):.0%}", 
+                  f"{(0.12 if core==1 else 0 if core==0 else -0.30):.0%}", '-']
     }
     st.download_button("📥 Export Design Report", 
                       pd.DataFrame(export_data).to_csv(index=False), 
-                      "np_optimizer_report.csv")
+                      "np_optimizer_report.csv", use_container_width=True)
 
+st.markdown("---")
 
-# MODEL SOURCES - Bulleted list format
+# REFERENCES
 st.markdown("### 📚 Model Sources [APA 7th]")
 st.markdown("""
 - Asimakidou et al. (2024) - Hydrophobicity optimal 3.0
@@ -241,7 +240,6 @@ st.markdown("""
 - Wang et al. (2024) - Lipid core +12%
 """)
 
-# DUAL-TRANSCYTOSIS - SEPARATE BULLETED LIST
 st.markdown("### 🎯 Dual-Transcytosis References")
 st.markdown("""
 - Fu et al. (2018) - RMT mechanisms (30%)
@@ -249,4 +247,3 @@ st.markdown("""
 - Zheng et al. (2025) - Dual RMT+AMT synergy (45%)
 - **Combined: RMT+AMT (45%) > RMT (30%) > AMT (22%) > None (8%)**
 """)
-
