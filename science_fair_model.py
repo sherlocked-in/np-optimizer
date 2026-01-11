@@ -259,22 +259,17 @@ if st.session_state.optimized:
     col2.metric(" After Caps", f"{bbb:.0%}", f"{min(95, int(factors['raw_sum']*100)):.0f}% max")
     col3.metric(" Final Score", f"{total:.0%}")
     
-    # CLEAN FACTORS TABLE
-    factors_df = pd.DataFrame({
-        'Factor': ['Size', 'Transcytosis', 'Charge', 'Shape', 'Hydro', 'Core', 'Mag', 'FUS',
-                  'PEG', 'Ligand', 'Stiffness', 'Renal', 'Toxicity', 'Size Penalty'],
-        'Contribution': [f"{factors['size_factor']:+.0%}", f"{factors['transcytosis']:+.0%}", 
-                        f"{factors['charge_boost']:+.0%}", f"{factors['shape_boost']:+.0%}", 
-                        f"{factors['hydro_boost']:+.0%}", f"{factors['core_effect']:+.0%}", 
-                        f"{factors['mag_boost']:+.0%}", f"{factors['fus_boost']:+.0%}", 
-                        f"{-factors['peg_penalty']:.0%}", f"{-factors['ligand_penalty']:.0%}", 
-                        f"{-factors['stiff_penalty']:.0%}", f"{-factors['renal_penalty']:.0%}",
-                        f"{-factors['tox_penalty']:.0%}", f"{-factors['size_penalty']:.0%}"],
-        'Description': ['Optimal 75nm', 'RMT+AMT', 'Cationic boost', 'Rod shape', 'LogP=3.0',
-                       'Lipid vs Metal', '>100nm needed', 'TJ opening', '2-3kDa optimal',
-                       '3.0/nm² optimal', '25kPa optimal', '<20nm clearance', 'Neural tox',
-                       '>120nm RES']
-    })
+   # CLEAN FACTORS TABLE (NO SORTING)
+st.dataframe(
+    factors_df, 
+    use_container_width=True,
+    column_config={
+        "Factor": st.column_config.TextColumn("Factor", disabled=True),
+        "Contribution": st.column_config.TextColumn("Contribution", disabled=True),
+        "Description": st.column_config.TextColumn("Description", disabled=True)
+    }
+)
+
     st.dataframe(factors_df, use_container_width=True)
     
     st.markdown(f"""
