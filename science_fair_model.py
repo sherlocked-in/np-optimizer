@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1PyW-TBDUb7EwgFCL0BdTyzg0PdiOI_X5
 """
 # -*- coding: utf-8 -*-
-"""Glioblastoma Nanoparticle Optimizer v2.2 - FIXED"""
+"""Glioblastoma Nanoparticle Optimizer v2.3 - FIXED ERRORBAR"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ st.set_page_config(page_title="NP Optimizer", layout="wide")
 plt.close('all')
 
 st.title("Glioblastoma Nanoparticle Optimizer")
-st.markdown("**Trained to reduce pharmaceutical expenses** | Prototype v2.2")
+st.markdown("**Trained to reduce pharmaceutical expenses** | Prototype v2.3")
 st.markdown("""
 <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; padding: 25px; border-radius: 15px; margin: 20px 0; 
@@ -122,7 +122,6 @@ def run_auto_optimize():
                 'message': result.message
             }
         else:
-            # Fallback to known optimal values
             return {
                 'size': 75.0, 'peg': 2.5, 'ligand': 3.0, 'stiffness': 25.0, 'hydro': 3.0,
                 'success': False,
@@ -203,7 +202,7 @@ live_bbb, live_low, live_high = predict_bbb_uncertainty(size, charge, rmt, amt, 
 st.subheader("Live Parameter Preview")
 st.info(f"BBB Score: {live_bbb:.0%} ±5% ({live_low:.0%}–{live_high:.0f}%) | Adjust sliders for real-time changes")
 
-# BUTTONS - FIXED
+# BUTTONS
 col1, col2, col3 = st.columns(3)
 
 if col1.button("OPTIMIZE", type="primary", use_container_width=True, key="optimize"):
@@ -221,7 +220,7 @@ if col2.button("AUTO-OPTIMIZE", type="secondary", use_container_width=True, key=
 if col3.button("Methodology", type="secondary", use_container_width=True):
     st.session_state.show_methodology = True
 
-# AUTO-OPTIMIZATION EXECUTION - FIXED
+# AUTO-OPTIMIZATION EXECUTION
 if st.session_state.get('auto_running', False):
     with st.spinner("Running optimization..."):
         st.session_state.best_params = run_auto_optimize()
@@ -263,7 +262,7 @@ if st.session_state.optimized:
     else:
         st.warning("PROMISING | Fine-tune parameters")
     
-    # FIXED BENCHMARK CHART WITH LEGEND
+    # FIXED BENCHMARK CHART - CORRECTED ERRORBAR
     st.subheader("Live Design vs Published Benchmarks")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), sharex=True)
     
@@ -272,9 +271,12 @@ if st.session_state.optimized:
     total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
     bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
     
-    # Total Score Chart
-    bars1 = ax1.bar(range(7), total_data, color=colors, width=0.7, alpha=0.8, label='Total Score')
-    ax1.errorbar(6, total, yerr=(total-total_low, total_high-total), fmt='o', 
+    # Total Score Chart - FIXED ERRORBAR
+    bars1 = ax1.bar(range(7), total_data, color=colors, width=0.7, alpha=0.8)
+    # Single point errorbar - use scalar values wrapped in arrays
+    err_total_low = total - total_low
+    err_total_high = total_high - total
+    ax1.errorbar(6, total, yerr=[err_total_low, err_total_high], fmt='o', 
                 color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
     ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, linewidth=2, label='PBCA Benchmark')
     ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
@@ -282,9 +284,11 @@ if st.session_state.optimized:
     ax1.legend(loc='upper left')
     ax1.grid(True, alpha=0.3)
     
-    # BBB Chart  
-    bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.7, alpha=0.8, label='BBB Penetration')
-    ax2.errorbar(6, bbb, yerr=(bbb-bbb_low, bbb_high-bbb), fmt='o', 
+    # BBB Chart - FIXED ERRORBAR
+    bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.7, alpha=0.8)
+    err_bbb_low = bbb - bbb_low
+    err_bbb_high = bbb_high - bbb
+    ax2.errorbar(6, bbb, yerr=[err_bbb_low, err_bbb_high], fmt='o', 
                 color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
     ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, linewidth=2, label='Industry Target')
     ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
@@ -293,7 +297,7 @@ if st.session_state.optimized:
     ax2.legend(loc='upper left')
     ax2.grid(True, alpha=0.3)
     
-    # Set x-ticks after all plotting
+    # Set x-ticks
     for ax in [ax1, ax2]:
         ax.set_xticks(range(7))
         ax.set_xticklabels(names, fontsize=11)
@@ -409,5 +413,4 @@ with st.expander("References"):
     """)
 
 st.markdown("---")
-st.markdown("*Prototype v2.2 | Fixed auto-optimize, charts, legends*")
-
+st.markdown("*Prototype v2.3 | FIXED errorbar shape mismatch*")
