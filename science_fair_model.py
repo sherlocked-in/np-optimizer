@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1PyW-TBDUb7EwgFCL0BdTyzg0PdiOI_X5
 """
 # -*- coding: utf-8 -*-
-"""🧠 Glioblastoma Nanoparticle Optimizer - FULLY FIXED"""
+"""🧠 Glioblastoma Nanoparticle Optimizer"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -36,7 +36,7 @@ published_nps = pd.DataFrame({
     'Size (nm)': [100, 50, 85, 120, 110, 650], 
     'BBB crossing efficiency (%)': [89, 72, 68, 40, 15, 5]
 })
-st.subheader("📊 Published Data (Ranked #1-6)")
+st.subheader(" Published Data (Ranked #1-6)")
 st.table(published_nps)  # ← FIXED: st.table() = NO SORTING
 
 # BBB PREDICTION MODEL (unchanged)
@@ -128,31 +128,31 @@ if 'optimized' not in st.session_state:
 # SLIDERS (fixed spacing)
 col1, col2 = st.columns(2)
 with col1:
-    size = st.slider("📏 Size (nm)", 20, 200, 85)
-    charge = st.selectbox("⚡ Charge", [0,1], format_func=lambda x: "Cationic" if x else "Neutral")
+    size = st.slider("Size (nm)", 20, 200, 85)
+    charge = st.selectbox(" Charge", [0,1], format_func=lambda x: "Cationic" if x else "Neutral")
 with col2:
-    rmt = st.selectbox("🎯 RMT", [0,1], format_func=lambda x: "Yes" if x else "No")
-    amt = st.selectbox("🧲 AMT", [0,1], format_func=lambda x: "Yes" if x else "No")
+    rmt = st.selectbox("RMT", [0,1], format_func=lambda x: "Yes" if x else "No")
+    amt = st.selectbox(" AMT", [0,1], format_func=lambda x: "Yes" if x else "No")
 
 col1, col2 = st.columns(2)
 with col1:
-    peg = st.slider("🛡️ PEG Density", 1.0, 5.0, 2.5)
-    ligand = st.slider("🎯 Ligand Density", 1.0, 5.0, 3.0)
+    peg = st.slider(" PEG Density", 1.0, 5.0, 2.5)
+    ligand = st.slider(" Ligand Density", 1.0, 5.0, 3.0)
 with col2:
-    shape = st.selectbox("🔺 Shape", [0,1], format_func=lambda x: "Rod" if x else "Sphere")
-    core = st.selectbox("🧬 Core", [0,1,2], format_func=lambda x: ["Polymer","Lipid","Metal"][int(x)])
+    shape = st.selectbox(" Shape", [0,1], format_func=lambda x: "Rod" if x else "Sphere")
+    core = st.selectbox(" Core", [0,1,2], format_func=lambda x: ["Polymer","Lipid","Metal"][int(x)])
 
 col1, col2 = st.columns(2)
 with col1:
-    hydro = st.slider("💧 Hydrophobicity", 1.0, 5.0, 3.0)
-    stiffness = st.slider("🪨 Stiffness (kPa)", 1, 100, 25)
+    hydro = st.slider(" Hydrophobicity", 1.0, 5.0, 3.0)
+    stiffness = st.slider(" Stiffness (kPa)", 1, 100, 25)
 with col2:
-    disrupt = st.selectbox("🔊 FUS Aid", [0,1], format_func=lambda x: "Yes" if x else "No")
-    magnetic = st.selectbox("🧲 Magnetic Field", [0,1], format_func=lambda x: "Yes (100nm+)" if x else "No")
+    disrupt = st.selectbox(" FUS Aid", [0,1], format_func=lambda x: "Yes" if x else "No")
+    magnetic = st.selectbox(" Magnetic Field", [0,1], format_func=lambda x: "Yes (100nm+)" if x else "No")
 
 # WARNINGS (fixed emojis)
 if size <= 100 and magnetic:
-    st.warning("🧲 Magnetic guidance only effective for NPs > 100 nm")
+    st.warning(" Magnetic guidance only effective for NPs > 100 nm")
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
 if size > 120:
@@ -160,11 +160,11 @@ if size > 120:
 
 # LIVE PREVIEW
 live_bbb = predict_bbb(size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic)
-st.subheader("📈 Live Parameter Preview")
+st.subheader(" Live Parameter Preview")
 st.info(f"**Current BBB Score: {live_bbb:.0%}** | Adjust sliders to see real-time changes")
 
 # OPTIMIZE BUTTON
-if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
+if st.button(" OPTIMIZE", type="primary", use_container_width=True):
     progress = st.progress(0)
     for i in range(100):
         time.sleep(0.01)
@@ -180,27 +180,27 @@ if st.session_state.optimized:
     
     # MAIN METRICS
     col1, col2 = st.columns(2)
-    col1.metric("🎯 Total Score", f"{total:.0%}")
-    col2.metric("🧠 BBB Penetration", f"{bbb:.0%}")
+    col1.metric(" Total Score", f"{total:.0%}")
+    col2.metric(" BBB Penetration", f"{bbb:.0%}")
     
     # PENALTY WARNINGS
     if size < 20:
         st.error("⚠️ RENAL CLEARANCE | <20nm rapid kidney elimination [Ribovski 2021]")
     if core == 2:
-        st.error("☠️ METAL TOXICITY | Oxidative stress [Hersh 2022]")
+        st.error("⚠️  METAL TOXICITY | Oxidative stress [Hersh 2022]")
     if not charge:
-        st.error("🚫 NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
+        st.error("⚠️ NEUTRAL CHARGE | Cannot cross BBB [Lockman 2004]")
     
     # RESULTS EVALUATION
     if total > 0.75:
-        st.success("🚀 **SYNTHESIZE NOW** | Beats 5/6 published NPs! 🥇")
+        st.success(" **SYNTHESIZE NOW** | Beats 5/6 published NPs! ")
     elif total > 0.65:
-        st.success("✅ **EXCELLENT** | Beats PBCA-PS80 benchmark!")
+        st.success(" **EXCELLENT** | Beats PBCA-PS80 benchmark!")
     else:
-        st.warning("🟡 **PROMISING** | Fine-tune parameters")
+        st.warning(" **PROMISING** | Fine-tune parameters")
     
     # BENCHMARK CHART
-    st.subheader("📊 Live Design vs Published Benchmarks")
+    st.subheader(" Live Design vs Published Benchmarks")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
 
     names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
@@ -230,12 +230,12 @@ if st.session_state.optimized:
     st.pyplot(fig)
     
     # FACTOR ANALYSIS - FIXED TABLE WITH st.table()
-    st.subheader("🔬 Factor Analysis")
+    st.subheader(" Factor Analysis")
     
     col1, col2, col3 = st.columns(3)
-    col1.metric("📊 Raw Factors", f"{factors['raw_sum']:.0%}", f"{bbb:.0%}")
-    col2.metric("⛓️ After Caps", f"{bbb:.0%}", f"{min(95, int(factors['raw_sum']*100)):.0f}% max")
-    col3.metric("⚗️ Final Score", f"{total:.0%}")
+    col1.metric(" Raw Factors", f"{factors['raw_sum']:.0%}", f"{bbb:.0%}")
+    col2.metric(" After Caps", f"{bbb:.0%}", f"{min(95, int(factors['raw_sum']*100)):.0f}% max")
+    col3.metric(" Final Score", f"{total:.0%}")
     
     # FIXED TABLE - NO SORTING FOREVER
     factors_df = pd.DataFrame({
@@ -257,7 +257,7 @@ if st.session_state.optimized:
     st.table(factors_df)  # ← FIXED: st.table() = NO MOVING ROWS
     
     st.markdown(f"""
-    **🧮 PERFECT MATH:**
+    **ADJUSTMENTS**
     • Raw factors = **{factors['raw_sum']:.0%}**
     • BBB (capped 95% max) = **{bbb:.0%}**
     • Total Score (×0.82) = **{total:.0%}**
