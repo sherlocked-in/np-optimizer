@@ -261,41 +261,44 @@ if st.session_state.optimized:
         st.success("EXCELLENT | Beats PBCA-PS80 benchmark!")
     else:
         st.warning("PROMISING | Fine-tune parameters")
-    
-    # FIXED BENCHMARK CHART - CORRECTED ERRORBAR
-    st.subheader("Live Design vs Published Benchmarks")
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), sharex=True)
-    
-    names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
-    colors = ['green','purple','orange','red','blue','gray','gold']
-    total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
-    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
-    
-    # Total Score Chart - FIXED ERRORBAR
-    bars1 = ax1.bar(range(7), total_data, color=colors, width=0.7, alpha=0.8)
-    # Single point errorbar - use scalar values wrapped in arrays
-    err_total_low = total - total_low
-    err_total_high = total_high - total
-    ax1.errorbar(6, total, yerr=[err_total_low, err_total_high], fmt='o', 
-                color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
-    ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, linewidth=2, label='PBCA Benchmark')
-    ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
-    ax1.set_ylim(0, 1.05)
-    ax1.legend(loc='upper left')
-    ax1.grid(True, alpha=0.3)
-    
-    # BBB Chart - FIXED ERRORBAR
-    bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.7, alpha=0.8)
-    err_bbb_low = bbb - bbb_low
-    err_bbb_high = bbb_high - bbb
-    ax2.errorbar(6, bbb, yerr=[err_bbb_low, err_bbb_high], fmt='o', 
-                color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
-    ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, linewidth=2, label='Industry Target')
-    ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
-    ax2.set_xlabel('Nanoparticle Designs', fontweight='bold', fontsize=12)
-    ax2.set_ylim(0, 1.05)
-    ax2.legend(loc='upper left')
-    ax2.grid(True, alpha=0.3)
+
+    # FIXED BENCHMARK CHART - FULL CORRECTION
+st.subheader("Live Design vs Published Benchmarks")
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), sharex=True)
+
+names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
+colors = ['green','purple','orange','red','blue','gray','gold']
+total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
+bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
+
+# Total Score Chart
+bars1 = ax1.bar(range(7), total_data, color=colors, width=0.7, alpha=0.8)
+x_pos = np.array([6])  # Explicit x position as array
+err_total_low = np.array([total - total_low])
+err_total_high = np.array([total_high - total])
+ax1.errorbar(x_pos, [total], yerr=[err_total_low, err_total_high], fmt='o', 
+             color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
+ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, linewidth=2, label='PBCA Benchmark')
+ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
+ax1.set_ylim(0, 1.05)
+ax1.legend(loc='upper left')
+ax1.grid(True, alpha=0.3)
+
+# BBB Chart  
+bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.7, alpha=0.8)
+err_bbb_low = np.array([bbb - bbb_low])
+err_bbb_high = np.array([bbb_high - bbb])
+ax2.errorbar(x_pos, [bbb], yerr=[err_bbb_low, err_bbb_high], fmt='o', 
+             color='black', capsize=8, linewidth=2, markersize=8, label='Live Uncertainty')
+ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, linewidth=2, label='Industry Target')
+ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
+ax2.set_xlabel('Nanoparticle Designs', fontweight='bold', fontsize=12)
+ax2.set_ylim(0, 1.05)
+ax2.legend(loc='upper left')
+ax2.grid(True, alpha=0.3)
+
+# Rest of your chart code remains the same...
+
     
     # Set x-ticks
     for ax in [ax1, ax2]:
