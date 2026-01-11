@@ -204,60 +204,82 @@ if st.session_state.optimized:
     else:
         st.warning("🔧 PROMISING | Fine-tune parameters")
     
-    # ✅ FIXED GRAPH - NO BLACK LINE OVERLAP
-    st.subheader("Live Design vs Published Benchmarks")
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-    
-    names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
-    colors = ['#2E8B57','#9370DB','#FF8C00','#DC143C','#4169E1','#808080','#FFD700']
-    total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
-    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
-    
-    # Total Score Chart - FIXED zorder and bar edgecolor
-    bars1 = ax1.bar(range(7), total_data, color=colors, width=0.65, alpha=0.85, 
-                    edgecolor='white', linewidth=1.2, zorder=3)
-    # Errorbar BEHIND bars with lower zorder
-    x_pos = np.array([6.0])
-    ax1.errorbar(x_pos, [total], yerr=[[total-total_low], [total_high-total]], 
-                fmt='none', ecolor='black', capsize=6, capthick=2, elinewidth=2.5, 
-                zorder=2, alpha=0.9, marker='o', markersize=10, markeredgecolor='black', 
-                markerfacecolor='gold', markeredgewidth=2)
-    
-    ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.7, linewidth=2, zorder=1)
-    ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
-    ax1.set_ylim(0, 1.05)
-    ax1.grid(True, alpha=0.3, zorder=0)
-    
-    # BBB Chart - FIXED zorder and bar edgecolor
-    bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.65, alpha=0.85, 
-                    edgecolor='white', linewidth=1.2, zorder=3)
-    ax2.errorbar(x_pos, [bbb], yerr=[[bbb-bbb_low], [bbb_high-bbb]], 
-                fmt='none', ecolor='black', capsize=6, capthick=2, elinewidth=2.5, 
-                zorder=2, alpha=0.9, marker='o', markersize=10, markeredgecolor='black', 
-                markerfacecolor='gold', markeredgewidth=2)
-    
-    ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.7, linewidth=2, zorder=1)
-    ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
-    ax2.set_xlabel('Nanoparticle Designs', fontweight='bold', fontsize=12)
-    ax2.set_ylim(0, 1.05)
-    ax2.grid(True, alpha=0.3, zorder=0)
-    
-    # X-axis labels
-    for ax in [ax1, ax2]:
-        ax.set_xticks(range(7))
-        ax.set_xticklabels(names, fontsize=11)
-        ax.tick_params(axis='x', rotation=0)
-    
-    # Value labels on bars
-    for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
-        for i, (bar, height) in enumerate(zip(ax.patches, data)):
-            ax.text(bar.get_x() + bar.get_width()/2, height + 0.015, 
-                   f'{height:.0%}', ha='center', va='bottom', fontweight='bold', 
-                   fontsize=9, zorder=4)
-    
-    plt.suptitle('Your Design vs Published Benchmarks (With Uncertainty)', fontsize=16, fontweight='bold')
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    st.pyplot(fig)
+    # FIXED GRAPH SECTION - NO LINE AT ALL
+st.subheader("Live Design vs Published Benchmarks")
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
+
+names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
+colors = ['#2E8B57','#9370DB','#FF8C00','#DC143C','#4169E1','#808080','#FFD700']
+total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
+bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
+
+# Total Score Chart - ABSOLUTELY NO LINE
+bars1 = ax1.bar(range(7), total_data, color=colors, width=0.65, alpha=0.85, 
+                edgecolor='white', linewidth=1.2)
+
+# ONLY errorbar caps and marker - NO LINE CONNECTING ANYTHING
+x_pos = 6.3  # Slightly offset from bar
+error_low = total - total_low
+error_high = total_high - total
+ax1.errorbar(x_pos, total, yerr=[[error_low], [error_high]], 
+             fmt='o',  # ONLY marker, NO line
+             color='black', 
+             ecolor='black',
+             markerfacecolor='gold',
+             markeredgecolor='black',
+             markeredgewidth=2,
+             markersize=12,
+             capsize=8,
+             elinewidth=3,
+             capthick=3,
+             zorder=5)
+
+ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.7, linewidth=2)
+ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
+ax1.set_ylim(0, 1.05)
+ax1.grid(True, alpha=0.3)
+
+# BBB Chart - SAME FIX
+bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.65, alpha=0.85, 
+                edgecolor='white', linewidth=1.2)
+
+error_low_bbb = bbb - bbb_low
+error_high_bbb = bbb_high - bbb
+ax2.errorbar(6.3, bbb, yerr=[[error_low_bbb], [error_high_bbb]], 
+             fmt='o',  # ONLY marker
+             color='black',
+             ecolor='black', 
+             markerfacecolor='gold',
+             markeredgecolor='black',
+             markeredgewidth=2,
+             markersize=12,
+             capsize=8,
+             elinewidth=3,
+             capthick=3,
+             zorder=5)
+
+ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.7, linewidth=2)
+ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
+ax2.set_xlabel('Nanoparticle Designs', fontweight='bold', fontsize=12)
+ax2.set_ylim(0, 1.05)
+ax2.grid(True, alpha=0.3)
+
+# X-axis and labels
+for ax in [ax1, ax2]:
+    ax.set_xticks(range(7))
+    ax.set_xticklabels(names, fontsize=11)
+    ax.tick_params(axis='x', rotation=0)
+
+# Value labels
+for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
+    for i, (bar, height) in enumerate(zip(ax.patches, data)):
+        ax.text(bar.get_x() + bar.get_width()/2, height + 0.015, 
+               f'{height:.0%}', ha='center', va='bottom', fontweight='bold', fontsize=9)
+
+plt.suptitle('Your Design vs Published Benchmarks', fontsize=16, fontweight='bold')
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+st.pyplot(fig)
+
     
     # FACTOR ANALYSIS
     st.subheader("Detailed Factor Analysis")
