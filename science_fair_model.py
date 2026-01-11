@@ -109,10 +109,39 @@ if size <= 100 and magnetic:
 if charge:
     st.warning("⚠️ **CATIONIC ALERT** | 100x BBB crossing but 10% neurotoxicity penalty")
 
+# Add after sliders, before Optimize button
+st.subheader("📈 Parameter Sensitivity")
+fig, ax = plt.subplots(figsize=(12,8))
+sensitivity_data = {
+    'Size': size_factor, 'Charge': charge_boost, 'RMT/AMT': transcytosis,
+    'PEG': -peg_penalty, 'Core': core_effect, 'FUS': fus_boost
+}
+pd.Series(sensitivity_data).plot(kind='barh', ax=ax)
+st.pyplot(fig)
+
 # OPTIMIZE BUTTON - FIXED RERUN
 if st.button("🚀 OPTIMIZE", type="primary", use_container_width=True):
     st.session_state.optimized = True
     st.rerun()  # ✅ FIXED: experimental_rerun() → rerun()
+
+if st.session_state.optimized:
+    # 👇 INSERT HERE - TOP 3
+    def get_top_configs():
+        best = []
+        for s in [75, 85, 95]:
+            for c in [1,0]:
+                score = predict_bbb(s, c, 1, 0, 2.5, 3.0, 1, 1, 3.0, 25, 1, 1)
+                best.append({'size':s, 'charge':c, 'score':score*0.82})
+        return sorted(best, key=lambda x: x['score'], reverse=True)[:3]
+    
+    top3 = get_top_configs()
+    st.subheader("🎯 Top 3 Recommended Designs")
+    for i, config in enumerate(top3):
+        st.metric(f"#{i+1}", f"{config['score']:.0%}", f"Size: {config['size']}nm")
+    
+    # Your existing metrics code continues...
+    col1.metric("🎯 Total Score", f"{total:.0%}")
+
 
 # RESULTS ONLY SHOW AFTER OPTIMIZE
 if 'optimized' not in st.session_state:
@@ -183,6 +212,20 @@ plt.tight_layout()
 st.pyplot(fig)
 
 st.markdown("---")
+
+st.pyplot(fig)
+
+# 👇 INSERT HERE - EXPORT
+if st.session_state.optimized:
+    export_data = {
+        'Parameter': ['Size', 'Charge', 'RMT', 'AMT', 'PEG', 'Ligand', 'Score'],
+        'Value': [size, 'Cationic' if charge else 'Neutral', rmt, amt, peg, ligand, f"{total:.0%}"],
+        'Impact': [f"{size_factor:.0%}", f"{charge_boost+tox_penalty:.0%}", f"{transcytosis:.0%}", ...]
+    }
+    st.download_button("📥 Export Design Report", 
+                      pd.DataFrame(export_data).to_csv(index=False), 
+                      "np_optimizer_report.csv")
+
 
 # MODEL SOURCES - Bulleted list format
 st.markdown("### 📚 Model Sources [APA 7th]")
