@@ -270,7 +270,6 @@ st.dataframe(
     }
 )
 
-    st.dataframe(factors_df, use_container_width=True)
     
     st.markdown(f"""
     ** ADJUSTMENTS:**
