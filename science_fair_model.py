@@ -155,44 +155,101 @@ if st.session_state.optimized:
     else:
         st.warning("🟡 **PROMISING** | Fine-tune parameters")
 
-# BENCHMARK CHART
+# STACKED BENCHMARK CHART - Replace your current chart section
 if st.session_state.optimized:
-    st.subheader("📊 Live Design vs Published Benchmarks")
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
-
+    st.subheader("📊 Stacked Factor Analysis vs Published Benchmarks")
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 14), sharex=True)
+    
+    # LIVE DESIGN FACTOR BREAKDOWN (calculate all components)
+    size_factor = max(0, 0.35 * math.exp(-((size-75)/25)**2))
+    size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
+    if rmt and amt: transcytosis = 0.45
+    elif rmt: transcytosis = 0.30
+    elif amt: transcytosis = 0.22
+    else: transcytosis = 0.08
+    peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
+    core_effect = 0.12 if core == 1 else (0.0 if core == 0 else -0.30)
+    fus_boost = 0.12 if disrupt and size >= 50 else 0.06 if disrupt else 0
+    mag_boost = 0.15 if magnetic and size >= 100 else 0
+    charge = charge
+    if charge:
+        charge_boost = 0.12
+        tox_penalty = 0.10
+    else:
+        charge_boost = -0.35
+        tox_penalty = 0
+    ligand_penalty = abs(ligand-3.0)/5 * 0.08
+    shape_boost = 0.06 if shape else 0
+    hydro_boost = 0.08 * (1 - abs(hydro-3.0)/2)
+    stiff_penalty = abs(stiffness-25)/50 * 0.06
+    renal_penalty = 0.20 if size < 20 else 0
+    
+    # POSITIVE FACTORS (green shades)
+    positives = [size_factor, transcytosis, max(charge_boost,0), shape_boost, hydro_boost, 
+                max(core_effect,0), mag_boost, fus_boost]
+    positive_bottoms = np.cumsum([0] + positives[:-1])
+    
+    # NEGATIVE FACTORS (red shades)  
+    negatives = [abs(min(charge_boost,0)), peg_penalty, ligand_penalty, stiff_penalty, 
+                renal_penalty, tox_penalty, size_penalty, abs(min(core_effect,0))]
+    negative_bottoms = np.cumsum([0] + negatives[:-1])
+    
+    # PLOT LIVE DESIGN STACKED BAR
+    x_live = 6  # Position 7th bar
+    ax1.bar(x_live, sum(positives), bottom=0, color='gold', edgecolor='black', width=0.8, label='Your Design')
+    ax1.bar(x_live, -sum(negatives), bottom=0, color='darkred', edgecolor='black', width=0.8)
+    
+    # PUBLISHED BENCHMARKS (simple bars for comparison)
     names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug']
+    benchmark_totals = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04]
+    benchmark_bbb = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05]
+    
     colors = ['green','purple','orange','red','blue','gray']
-
-    total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
-    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
-
-    ax1.bar(range(7), total_data, color=colors + ['gold'], width=0.8)
-    ax1.set_xticks(range(7))
-    ax1.set_xticklabels(names + ['**LIVE**'], fontsize=11)
-    ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
+    for i, (name, total, bbb) in enumerate(zip(names, benchmark_totals, benchmark_bbb)):
+        ax1.bar(i, total, color=colors[i], alpha=0.7, width=0.8, edgecolor='black')
+        ax2.bar(i, bbb, color=colors[i], alpha=0.7, width=0.8, edgecolor='black')
+    
+    # YOUR DESIGN (gold bar)
+    ax1.bar(x_live, total, color='gold', edgecolor='black', width=0.8, linewidth=3)
+    ax2.bar(x_live, bbb, color='gold', edgecolor='black', width=0.8, linewidth=3)
+    
+    # LABELS & FORMATTING
+    all_names = names + ['**YOUR DESIGN**']
+    for ax in [ax1, ax2]:
+        ax.set_xticks(range(7))
+        ax.set_xticklabels(all_names, fontsize=12, fontweight='bold')
+        ax.set_ylim(0, 1.0)
+        ax.tick_params(axis='x', rotation=0)
+    
+    ax1.set_ylabel('Total Score', fontweight='bold', fontsize=14)
     ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.8, label='PBCA Benchmark')
-    ax1.set_ylim(0, 1.0)
-    ax1.legend()
-    ax1.tick_params(axis='x', rotation=0)
-
-    ax2.bar(range(7), bbb_data, color=colors + ['gold'], width=0.8)
-    ax2.set_xticks(range(7))
-    ax2.set_xticklabels(names + ['**LIVE**'], fontsize=11)
-    ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
-    ax2.set_xlabel('Nanoparticle Designs', fontweight='bold')
+    ax1.legend(['Positives', 'Penalties', 'Published NPs', 'YOUR DESIGN'])
+    
+    ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=14)
+    ax2.set_xlabel('Nanoparticle Designs', fontweight='bold', fontsize=14)
     ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.8, label='Industry Target')
-    ax2.set_ylim(0, 1.0)
-    ax2.legend()
-    ax2.tick_params(axis='x', rotation=0)
-
-    for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
-        for i, height in enumerate(data):
-            ax.text(i, height + 0.02, f'{height:.0%}', 
-                    ha='center', va='bottom', fontweight='bold', fontsize=10)
-
-    plt.suptitle('Total Score vs BBB Penetration (Same Scale)', fontsize=16, fontweight='bold')
+    
+    plt.suptitle('Stacked Factor Analysis: Your Design vs Published Benchmarks', fontsize=16, fontweight='bold')
     plt.tight_layout()
     st.pyplot(fig)
+    
+    # FACTOR BREAKDOWN TABLE
+    st.subheader("🔬 Detailed Factor Contributions")
+    factors_df = pd.DataFrame({
+        'Factor': ['Size', 'Transcytosis', 'Charge', 'Shape', 'Hydrophobicity', 'Core', 
+                  'Magnetic', 'FUS', 'PEG', 'Ligand', 'Stiffness', 'Renal', 'Toxicity', 'Size Penalty'],
+        'Contribution': [f"{size_factor:+.0%}", f"{transcytosis:+.0%}", f"{charge_boost:+.0%}", 
+                       f"{shape_boost:+.0%}", f"{hydro_boost:+.0%}", f"{core_effect:+.0%}",
+                       f"{mag_boost:+.0%}", f"{fus_boost:+.0%}", f"{-peg_penalty:.0%}", 
+                       f"{-ligand_penalty:.0%}", f"{-stiff_penalty:.0%}", f"{-renal_penalty:.0%}",
+                       f"{-tox_penalty:.0%}", f"{-size_penalty:.0%}"],
+        'Description': ['Optimal 75nm', 'RMT+AMT', 'Cationic boost', 'Rod shape', 'LogP=3.0',
+                       'Lipid vs Metal', '>100nm needed', 'TJ opening', '2-3kDa optimal',
+                       '3.0/nm² optimal', '25kPa optimal', '<20nm clearance', 'Neural toxicity',
+                       '>120nm RES clearance']
+    })
+    st.dataframe(factors_df, use_container_width=True)
+
 
     # EXPORT BUTTON (Simplified)
     st.subheader("📥 Export Results")
