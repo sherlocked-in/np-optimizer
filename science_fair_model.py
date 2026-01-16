@@ -109,9 +109,6 @@ with st.sidebar:
     **Validation Approach**: Multi-metric similarity matching to experimentally 
     validated nanoparticles from primary literature.
     
-    **For Science Fair Judges**: Demonstrates systematic literature review, 
-    quantitative data synthesis, and design optimization principles grounded 
-    in primary nanomedicine research.
     """)
 
 # Main content panels
