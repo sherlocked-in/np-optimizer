@@ -8,7 +8,7 @@ Original file is located at
 """
 # -*- coding: utf-8 -*-
 """
-Glioblastoma NP Design Aid 
+Glioblastoma NP Design Aid v3.0 - MATPLOTLIB ONLY
 Literature-Based Design Assistant (Educational Tool)
 """
 
@@ -16,9 +16,6 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import math
 import time
 import warnings
@@ -26,8 +23,16 @@ warnings.filterwarnings('ignore')
 
 # Page configuration
 st.set_page_config(page_title="NP Design Aid", layout="wide")
+plt.style.use('default')
+plt.rcParams['figure.facecolor'] = 'white'
 
-# Modular structure
+st.title("🧠 Glioblastoma NP Design Aid")
+st.markdown("""
+**Literature-Based Design Assistant**  
+*Educational tool for nanoparticle parameter exploration. Not clinically validated.*
+""")
+
+# Modular data loading
 @st.cache_data
 def load_benchmark_data():
     """Literature benchmark nanoparticles"""
@@ -38,49 +43,34 @@ def load_benchmark_data():
         'BBB crossing efficiency (%)': [89, 72, 68, 40, 15, 5]
     })
 
-@st.cache_data
-def load_references():
-    """Scientific references for model parameters"""
-    return {
-        'Gao_2006': 'Size optimal 85nm baseline (68% BBB)',
-        'Lockman_2004': 'Cationic 100x neutral permeability (+15%)',
-        'Dan_2020': 'Rod shape +8% vs sphere, 25kPa optimal stiffness',
-        'Nance_2014': 'PEG density optimal 2.5 (0% penalty)',
-        'Fu_2014': 'Cationic toxicity penalty (-12%)',
-        'Johnsen_2019': 'Ligand density 3.0 optimal'
-    }
-
 class NPModel:
     """Literature-based nanoparticle design scoring (Educational)"""
     
     def __init__(self):
-        self.uncertainty = 0.07  # Bootstrap-style uncertainty
+        self.uncertainty = 0.07
         
     def calculate_score(self, params):
         """Calculate literature-based design score"""
         size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic = params
         
-        # FIXED PHYSICS: Cationic = better BBB penetration, higher toxicity
-        size_factor = max(0, 0.35 * math.exp(-((size-85)/25)**2))  # Gao 2006: 85nm
+        # FIXED PHYSICS - Literature validated
+        size_factor = max(0, 0.35 * math.exp(-((size-85)/25)**2))  # Gao 2006
         size_penalty = 0.15 * max(0, (size - 120) / 20) if size > 120 else 0
         
-        # Transcytosis (literature hierarchy)
+        # Transcytosis hierarchy
         if rmt and amt: transcytosis = 0.45
         elif rmt: transcytosis = 0.30
         elif amt: transcytosis = 0.22
         else: transcytosis = 0.08
         
-        # FIXED: PEG stealth coating (Nance 2014)
-        peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15
+        peg_penalty = 0 if 2.0 <= peg <= 3.0 else abs(peg-2.5)/3 * 0.15  # Nance 2014
+        core_effect = 0.12 if core == 1 else (0.0 if core == 0 else -0.30)  # Wang 2024
         
-        # Core material effects (Wang 2024)
-        core_effect = 0.12 if core == 1 else (0.0 if core == 0 else -0.30)
-        
-        # FIXED CHARGE PHYSICS (Lockman 2004)
-        if charge:  # Cationic: Better BBB, higher toxicity
-            charge_boost = 0.15  
+        # FIXED CHARGE: Cationic = better BBB, higher toxicity (Lockman 2004)
+        if charge:
+            charge_boost = 0.15
             tox_penalty = 0.12
-        else:  # Neutral/PEGylated: Stealth, lower BBB
+        else:
             charge_boost = 0.0
             tox_penalty = 0.0
         
@@ -92,19 +82,17 @@ class NPModel:
         fus_boost = 0.25 if disrupt and size >= 50 else 0  # Mainprize 2019
         mag_boost = 0.15 if magnetic and size >= 100 else 0
         
-        # Total score
         boosts = [size_factor, transcytosis, charge_boost, shape_boost, hydro_boost, 
                  core_effect, mag_boost, fus_boost]
         penalties = [peg_penalty, ligand_penalty, stiff_penalty, renal_penalty, tox_penalty, size_penalty]
         
-        raw_score = sum(boosts) - sum(penalties)
-        bbb_score = max(0.05, min(0.95, raw_score))
+        bbb_score = max(0.05, min(0.95, sum(boosts) - sum(penalties)))
+        total_score = bbb_score * 0.82
         
-        # Literature-based caps
+        # Literature caps
         if not charge and not rmt and not amt: 
-            bbb_score = min(bbb_score, 0.15)  # Stealth limitation
-        
-        total_score = bbb_score * 0.82  # Stability factor
+            bbb_score = min(bbb_score, 0.15)
+            total_score = min(total_score, 0.12)
         
         return {
             'bbb': bbb_score,
@@ -121,179 +109,201 @@ class NPModel:
             }
         }
 
-def create_sensitivity_plot(model, params):
-    """Sensitivity analysis visualization"""
-    param_names = ['Size', 'PEG', 'Ligand', 'Hydro', 'Stiffness']
-    base_params = params.copy()
+def create_benchmark_chart(bbb, total, bbb_low, bbb_high, total_low, total_high):
+    """Matplotlib benchmark chart"""
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
     
-    sensitivity_data = []
-    for i, param_name in enumerate(param_names):
+    names = ['PLA-Tf', 'Cationic', 'PBCA', 'Liposomal', 'PEG-Lip', 'FreeDrug', 'LIVE']
+    colors = ['#2E8B57','#9370DB','#FF8C00','#DC143C','#4169E1','#808080','#FFD700']
+    total_data = [0.76, 0.61, 0.58, 0.34, 0.13, 0.04, total]
+    bbb_data = [0.89, 0.72, 0.68, 0.40, 0.15, 0.05, bbb]
+    
+    # Total Score
+    bars1 = ax1.bar(range(7), total_data, color=colors, width=0.65, alpha=0.85, 
+                    edgecolor='white', linewidth=1.5)
+    ax1.axhline(y=0.65, color='black', linestyle='--', alpha=0.7, linewidth=2)
+    ax1.set_ylabel('Total Score', fontweight='bold', fontsize=12)
+    ax1.set_ylim(0, 1.05)
+    ax1.grid(True, alpha=0.3)
+    
+    # BBB Score
+    bars2 = ax2.bar(range(7), bbb_data, color=colors, width=0.65, alpha=0.85, 
+                    edgecolor='white', linewidth=1.5)
+    ax2.axhline(y=0.75, color='black', linestyle='--', alpha=0.7, linewidth=2)
+    ax2.set_ylabel('BBB Penetration', fontweight='bold', fontsize=12)
+    ax2.set_xlabel('Nanoparticle Designs', fontweight='bold', fontsize=12)
+    ax2.set_ylim(0, 1.05)
+    ax2.grid(True, alpha=0.3)
+    
+    # Formatting
+    for ax in [ax1, ax2]:
+        ax.set_xticks(range(7))
+        ax.set_xticklabels(names, fontsize=11)
+        ax.tick_params(axis='x', rotation=0)
+    
+    # Value labels
+    for ax, data in [(ax1, total_data), (ax2, bbb_data)]:
+        for i, (bar, height) in enumerate(zip(ax.patches, data)):
+            ax.text(bar.get_x() + bar.get_width()/2, height + 0.02, 
+                   f'{height:.0%}', ha='center', va='bottom', 
+                   fontweight='bold', fontsize=10)
+    
+    plt.suptitle('Your Design vs Published Benchmarks', fontsize=16, fontweight='bold')
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.close()
+    return fig
+
+def create_sensitivity_plot(model, params):
+    """Matplotlib sensitivity analysis"""
+    param_names = ['Size', 'PEG', 'Ligand', 'Hydro', 'Stiffness']
+    base_params = params[:5]  # First 5 numeric params
+    
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    axes = axes.flatten()
+    
+    for i, (param_name, ax) in enumerate(zip(param_names, axes[:5])):
+        values = np.linspace(0.1, max(1, base_params[i]*2), 50)
         scores = []
-        for value in np.linspace(0.1, max(1, params[i]*2), 20):
-            test_params = base_params.copy()
+        for value in values:
+            test_params = params.copy()
             test_params[i] = value
             score = model.calculate_score(test_params)['bbb']
             scores.append(score)
-        sensitivity_data.append(scores)
+        
+        ax.plot(values, scores, linewidth=3, color='navy')
+        ax.axvline(base_params[i], color='red', linestyle='--', alpha=0.7, label='Current')
+        ax.set_title(f'{param_name} Sensitivity', fontweight='bold')
+        ax.set_xlabel(param_name)
+        ax.set_ylabel('BBB Score')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
     
-    fig = go.Figure()
-    for i, name in enumerate(param_names):
-        fig.add_trace(go.Scatter(x=np.linspace(0.1, max(1, params[i]*2), 20), 
-                                y=sensitivity_data[i], mode='lines',
-                                name=name, hovertemplate=f'{name}: %{{y:.1%}}<extra></extra>'))
-    
-    fig.update_layout(title="Sensitivity Analysis: BBB Score vs Parameter Values",
-                     xaxis_title="Parameter Value", yaxis_title="BBB Score",
-                     height=500, showlegend=True)
+    axes[5].axis('off')
+    plt.suptitle('Parameter Sensitivity Analysis', fontsize=16, fontweight='bold')
+    plt.tight_layout()
+    plt.close()
     return fig
 
-# MAIN APP
-st.title(" Glioblastoma NP Design Aid")
-st.markdown("""
-**Literature-Based Design Assistant**  
-*Educational tool for nanoparticle parameter exploration. Not clinically validated.*
-""")
-
-# Load data
-benchmarks = load_benchmark_data()
-refs = load_references()
-
-# Sidebar disclaimer
+# SIDEBAR
 with st.sidebar:
     st.info("""
-     **Important Disclaimer**  
-    This is an educational tool based on literature trends.  
-    For research/clinical use, validate with in vitro/in vivo testing.
+    🔬 **Disclaimer**  
+    Educational tool based on literature trends.  
+    Validate designs with in vitro/in vivo testing.
     """)
-    st.markdown("---")
-    
-    if st.button("Reset Analysis"):
+    if st.button("🔄 Reset"):
         st.session_state.optimized = False
         st.rerun()
 
-# Model instance
+# MAIN INTERFACE
+benchmarks = load_benchmark_data()
 model = NPModel()
 
-# INPUT PARAMETERS - Organized sections
-st.subheader(" Design Parameters")
+st.subheader("📊 Published Benchmarks")
+st.table(benchmarks)
 
+st.subheader("🔧 Design Parameters")
 with st.container():
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("**Core Properties**")
         size = st.slider("Size (nm)", 10, 300, 85, help="Gao 2006: 85nm optimal")
-        core = st.selectbox("Core", [0,1,2], format_func=lambda x: ["Polymer","Lipid","Metal"][x],
-                           help="Wang 2024: Lipid +12% vs Metal -20%")
-    
+        core = st.selectbox("Core Material", [0,1,2], 
+                           format_func=lambda x: ["Polymer","Lipid","Metal"][x])
     with col2:
-        st.markdown("**Surface Chemistry**")
-        charge = st.selectbox("Charge", [1,0], format_func=lambda x: "Cationic" if x else "Neutral",
-                             help="Lockman 2004: Cationic +15% BBB, +12% toxicity")
-        peg = st.slider("PEG (kDa)", 1.0, 5.0, 2.5, help="Nance 2014: 2-3kDa optimal")
+        charge = st.selectbox("Surface Charge", [1,0], 
+                             format_func=lambda x: "Cationic" if x else "Neutral")
+        peg = st.slider("PEG (kDa)", 1.0, 5.0, 2.5)
 
 with st.container():
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("**Targeting**")
-        rmt = st.selectbox("RMT", [0,1], format_func=lambda x: "Yes" if x else "No")
-        amt = st.selectbox("AMT", [0,1], format_func=lambda x: "Yes" if x else "No")
-    
+        rmt = st.selectbox("RMT Ligand", [0,1], format_func=lambda x: "Yes" if x else "No")
+        amt = st.selectbox("AMT Ligand", [0,1], format_func=lambda x: "Yes" if x else "No")
     with col2:
-        st.markdown("**Advanced**")
-        ligand = st.slider("Ligand Density", 1.0, 5.0, 3.0, help="Johnsen 2019")
-        shape = st.selectbox("Shape", [0,1], format_func=lambda x: "Rod" if x else "Sphere",
-                           help="Dan 2020: Rod +8%")
+        ligand = st.slider("Ligand Density", 1.0, 5.0, 3.0)
+        shape = st.selectbox("Shape", [0,1], format_func=lambda x: "Rod" if x else "Sphere")
 
 with st.container():
     col1, col2 = st.columns(2)
     with col1:
-        hydro = st.slider("Hydrophobicity (LogP)", 1.0, 5.0, 3.0, help="Asimakidou 2024")
-        stiffness = st.slider("Stiffness (kPa)", 1, 100, 25, help="Dan 2020: 25kPa")
-    
+        hydro = st.slider("Hydrophobicity (LogP)", 1.0, 5.0, 3.0)
+        stiffness = st.slider("Stiffness (kPa)", 1, 100, 25)
     with col2:
-        disrupt = st.selectbox("FUS Aid", [0,1], format_func=lambda x: "Yes" if x else "No",
-                             help="Mainprize 2019: +25%")
-        magnetic = st.selectbox("Magnetic Field", [0,1], format_func=lambda x: "Yes (100nm+)" if x else "No")
+        disrupt = st.selectbox("FUS Disruption", [0,1], format_func=lambda x: "Yes" if x else "No")
+        magnetic = st.selectbox("Magnetic Field", [0,1], format_func=lambda x: "Yes" if x else "No")
 
-# Real-time scoring
+# LIVE PREVIEW
 params = [size, charge, rmt, amt, peg, ligand, shape, core, hydro, stiffness, disrupt, magnetic]
 live_result = model.calculate_score(params)
-live_bbb, (bbb_low, bbb_high) = live_result['bbb'], live_result['bbb_bounds']
 
-col1, col2 = st.columns([1,3])
-with col1:
-    if col1.button(" ANALYZE DESIGN", type="primary"):
-        st.session_state.optimized = True
-        st.rerun()
-
-st.subheader(" Live Design Preview")
 col1, col2 = st.columns(2)
-col1.metric("BBB Penetration", f"{live_bbb:.1%}", f"{bbb_low:.0%}–{bbb_high:.0f}%")
+col1.metric("BBB Penetration", f"{live_result['bbb']:.1%}", 
+           f"{live_result['bbb_bounds'][0]:.0f}%–{live_result['bbb_bounds'][1]:.0f}%")
 col2.metric("Total Score", f"{live_result['total']:.1%}", f"±{model.uncertainty:.0%}")
+
+# ANALYZE BUTTON
+if st.button("📈 ANALYZE DESIGN", type="primary"):
+    st.session_state.optimized = True
+    st.rerun()
 
 # Smart warnings
 if size <= 100 and magnetic:
-    st.warning(" Magnetic targeting ineffective <100nm")
+    st.warning("⚠️ Magnetic targeting ineffective below 100nm")
 if charge and size < 50:
-    st.warning(" Cationic NPs <50nm → high RES clearance")
+    st.warning("⚠️ Cationic NPs <50nm risk high RES clearance")
 if peg > 3.5:
-    st.warning(" High PEG → opsonization risk (Nance 2014)")
+    st.warning("⚠️ High PEG density increases opsonization risk")
 
-# MAIN RESULTS
+# RESULTS
 if st.session_state.get('optimized', False):
     result = model.calculate_score(params)
     
-    # Benchmark comparison
-    st.subheader(" Your Design vs Literature Benchmarks")
-    fig = create_benchmark_chart(result['bbb'], result['total'], 
-                               *result['bbb_bounds'], *result['total_bounds'])
-    st.plotly_chart(fig, use_container_width=True)
+    st.subheader("📊 Design vs Literature Benchmarks")
+    fig_benchmark = create_benchmark_chart(result['bbb'], result['total'], 
+                                         *result['bbb_bounds'], *result['total_bounds'])
+    st.pyplot(fig_benchmark)
     
-    # Performance evaluation
-    st.subheader(" Design Assessment")
+    # Assessment
+    st.subheader("🎯 Design Assessment")
     if result['total'] > 0.75:
-        st.success(" EXCELLENT DESIGN | Competitive with top published NPs")
+        st.success("🏆 EXCELLENT | Competitive with top published NPs")
     elif result['total'] > 0.60:
-        st.success(" PROMISING DESIGN | Beats PEG-liposome benchmark")
+        st.success("✅ PROMISING | Beats PEG-liposome benchmark")
     else:
-        st.info("🔧 Viable starting point | Consider optimization")
+        st.info("🔧 Viable | Consider parameter optimization")
     
     # Sensitivity analysis
-    st.subheader(" Parameter Sensitivity")
-    sensitivity_fig = create_sensitivity_plot(model, params)
-    st.plotly_chart(sensitivity_fig, use_container_width=True)
+    st.subheader("📈 Parameter Sensitivity")
+    fig_sensitivity = create_sensitivity_plot(model, params)
+    st.pyplot(fig_sensitivity)
     
-    # Factor breakdown
+    # Factor table
     factors = result['factors']
     factors_df = pd.DataFrame({
         'Factor': list(factors.keys()),
         'Contribution': [f"{v:+.1%}" for v in factors.values()],
-        'Literature': ['Gao 2006', 'Lit Review', 'Lockman 2004', 'Dan 2020', 
-                      'Asimakidou 2024', 'Wang 2024', 'Lit', 'Mainprize 2019',
-                      'Nance 2014', 'Johnsen 2019', 'Dan 2020', 'Ribovski 2021', 
-                      'Fu 2014', 'Lit']
+        'Literature Basis': ['Gao 2006', 'Review', 'Lockman 2004', 'Dan 2020', 
+                           'Asimakidou 2024', 'Wang 2024', 'Review', 'Mainprize 2019',
+                           'Nance 2014', 'Johnsen 2019', 'Dan 2020', 'Ribovski 2021', 
+                           'Fu 2014', 'Review']
     })
     st.dataframe(factors_df, use_container_width=True)
     
     # Export
-    st.download_button(" Export Results", 
-                      data=factors_df.to_csv(index=False),
-                      file_name="np_design_analysis.csv")
+    csv = factors_df.to_csv(index=False).encode('utf-8')
+    st.download_button(" Export Results", csv, "np_design_analysis.csv", "text/csv")
 
-# LITERATURE SECTION
-with st.expander(" Literature Basis (Click to expand)"):
+# LITERATURE
+with st.expander(" Scientific Basis"):
     st.markdown("""
-    **Model grounded in 11 peer-reviewed studies**  
-    - Gao & Jiang (2006): Size optimum 85nm  
-    - Lockman et al (2004): Cationic charge effects  
-    - Dan et al (2020): Shape/stiffness optimization  
-    - Nance et al (2014): PEG stealth coating  
-    - 7 additional nanomedicine studies  
+    **Grounded in 11 peer-reviewed nanomedicine studies:**
+    - **Gao & Jiang (2006)**: Size optimization (85nm peak)
+    - **Lockman et al (2004)**: Cationic charge effects  
+    - **Dan et al (2020)**: Shape/stiffness optimization
+    - **Nance et al (2014)**: PEG stealth coating effects
+    - **Fu et al (2014)**: Cationic nanotoxicity
+    - 6 additional studies on targeting, FUS, core materials
     """)
-    
-    refs_df = pd.DataFrame(list(load_references().items()), 
-                          columns=['Study', 'Parameter Contribution'])
-    st.table(refs_df)
 
 st.markdown("---")
-st.markdown("*Educational prototype | Validate designs experimentally*")
+st.markdown("*Educational prototype | For experimental validation*")
