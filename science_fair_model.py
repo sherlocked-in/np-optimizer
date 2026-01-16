@@ -147,14 +147,11 @@ col1, col2 = st.columns([2.2, 0.8])
 with col1:
     top_performers = df.nlargest(6, 'BBB_Efficiency_percent')[
         ['NP_Type', 'Size_nm', 'Ligand', 'BBB_Efficiency_percent']
-    ].round(0)
+    ].round(0).copy()
+    # FIXED: Convert to string BEFORE styling to avoid numeric gradient error
     top_performers['BBB_Efficiency_percent'] = top_performers['BBB_Efficiency_percent'].astype(str) + '%'
-    st.dataframe(
-        top_performers.style.background_gradient(
-            subset=['BBB_Efficiency_percent'], cmap='viridis', low=0, high=0.6
-        ),
-        use_container_width=True, height=220
-    )
+    # FIXED: Use numeric column for gradient or skip styling entirely
+    st.dataframe(top_performers, use_container_width=True, height=220)
 
 with col2:
     st.subheader("Parameter Input")
@@ -193,7 +190,7 @@ col3.metric("Expected BBB Range", f"{matches_df.iloc[0]['BBB_Efficiency_percent'
 # Top matches table
 st.subheader("Top 5 Literature Matches")
 matches_display = matches_df[['Study', 'NP_Type', 'Size_nm', 'Ligand', 
-                             'BBB_Efficiency_percent', 'Similarity_Score']].round(1)
+                             'BBB_Efficiency_percent', 'Similarity_Score']].round(1).copy()
 matches_display['Similarity_Score'] = matches_display['Similarity_Score'].apply(lambda x: f"{x:.0%}")
 matches_display['BBB_Efficiency_percent'] = matches_display['BBB_Efficiency_percent'].apply(lambda x: f"{x:.0f}%")
 st.dataframe(matches_display, use_container_width=True)
@@ -242,30 +239,31 @@ axes[1,0].set_title('Surface Charge Distribution')
 axes[1,0].legend()
 axes[1,0].grid(True, alpha=0.3)
 
-# Ligand performance
+plt.tight_layout()
+st.pyplot(fig)
+
+# Ligand performance table (moved outside subplot to avoid conflicts)
+st.subheader("Ligand Performance Summary")
 ligand_perf = df.groupby('Ligand')['BBB_Efficiency_percent'].agg(['mean', 'count']).round(1)
 ligand_perf['mean'] = ligand_perf['mean'].apply(lambda x: f"{x:.0f}%")
 st.dataframe(ligand_perf, use_container_width=True)
-
-plt.tight_layout()
-st.pyplot(fig)
 
 # =============================================================================
 # COMPLETE APA REFERENCE LIST
 # =============================================================================
 with st.expander("Complete Bibliography (15 Primary Studies - APA Format)"):
     st.markdown("""
-    **Fenart, L., Casanova, P., Gelperina, S., West, J., Begley, D., Pradier, L., Demeneix, B., Goldsborough, M., Kreuter, J., & Cecchelli, R. (1999).** *Transport of poly(ε-caprolactone) nanoparticles across the blood-brain barrier in vitro.* _Pharmaceutical Research, 16_(5), 718-724. https://doi.org/10.1023/A:1018983305609
+    **Fenart, L., Casanova, P., Gelperina, S., West, J., Begley, D., Pradier, L., Demeneix, B., Goldsborough, M., Kreuter, J., & Cecchelli, R. (1999).** *Transport of poly(ε-caprolactone) nanoparticles across the blood-brain barrier in vitro.* _Pharmaceutical Research, 16_(5), 718-724. [https://doi.org/10.1023/A:1018983305609](https://doi.org/10.1023/A:1018983305609)
     
-    **Gao, K., & Jiang, X. (2006).** *Influence of particle size on blood-brain barrier permeability and passive diffusion.* _International Journal of Pharmaceutics, 310_(1-2), 213-219. https://doi.org/10.1016/j.ijpharm.2005.11.040
+    **Gao, K., & Jiang, X. (2006).** *Influence of particle size on blood-brain barrier permeability and passive diffusion.* _International Journal of Pharmaceutics, 310_(1-2), 213-219. [https://doi.org/10.1016/j.ijpharm.2005.11.040](https://doi.org/10.1016/j.ijpharm.2005.11.040)
     
-    **Lockman, P. R., Mumper, R. J., Khan, M. A., & Allen, D. D. (2004).** *In vivo and in vitro comparisons of blood-brain barrier transport of [³H]-cyclosporin A._ *Journal of Pharmacology and Experimental Therapeutics, 310*(1), 149-155. https://doi.org/10.1124/jpet.103.066886
+    **Lockman, P. R., Mumper, R. J., Khan, M. A., & Allen, D. D. (2004).** *In vivo and in vitro comparisons of blood-brain barrier transport of [³H]-cyclosporin A._ *Journal of Pharmacology and Experimental Therapeutics, 310*(1), 149-155. [https://doi.org/10.1124/jpet.103.066886](https://doi.org/10.1124/jpet.103.066886)
     
-    **Mainprize, T., et al. (2019).** *Safety and maximum tolerated dose study of MR-guided focused ultrasound with and without aducanumab in Alzheimer's disease._ *Journal of Neurosurgery, 132*(3), 734-742. https://doi.org/10.3171/2018.8.JNS181485
+    **Mainprize, T., et al. (2019).** *Safety and maximum tolerated dose study of MR-guided focused ultrasound with and without aducanumab in Alzheimer's disease._ *Journal of Neurosurgery, 132*(3), 734-742. [https://doi.org/10.3171/2018.8.JNS181485](https://doi.org/10.3171/2018.8.JNS181485)
     
-    **Sahin, A., et al. (2025).** *Preparation and evaluation of temozolomide loaded PLGA nanoparticles for glioblastoma treatment._ *Scientific Reports, 15*, 20012. https://doi.org/10.1038/s41598-025-20012-x
+    **Sahin, A., et al. (2025).** *Preparation and evaluation of temozolomide loaded PLGA nanoparticles for glioblastoma treatment._ *Scientific Reports, 15*, 20012. [https://doi.org/10.1038/s41598-025-20012-x](https://doi.org/10.1038/s41598-025-20012-x)
     
-    **Zhang, Y., et al. (2025).** *Lipid nanoparticle formulation for gene editing and RNA interference in glioblastoma._ *Neuro-Oncology*. https://doi.org/10.1093/neuonc/noaf162
+    **Zhang, Y., et al. (2025).** *Lipid nanoparticle formulation for gene editing and RNA interference in glioblastoma._ *Neuro-Oncology*. [https://doi.org/10.1093/neuonc/noaf162](https://doi.org/10.1093/neuonc/noaf162)
     
     ***Note**: Full bibliography of all 15 studies available in project documentation.
     **Data synthesized from primary experimental results reported in each publication.**
