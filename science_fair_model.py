@@ -8,7 +8,7 @@ Original file is located at
 """
 # -*- coding: utf-8 -*-
 """
-Glioblastoma Nanoparticle Optimizer v2.5
+Glioblastoma Nanoparticle Optimizer 
 Complete APA-formatted references list
 """ 
 
